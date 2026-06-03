@@ -1,0 +1,64 @@
+@import "tailwindcss";
+@import "mapbox-gl/dist/mapbox-gl.css";
+
+@theme {
+  --color-navy: #0f1c2e;
+  --color-navy-light: #1a2d47;
+  --color-sand: #e8dcc8;
+  --color-sand-dark: #d4c4a8;
+  --color-gold: #c9a962;
+  --color-gold-light: #dfc88a;
+  --color-cream: #faf8f5;
+  --color-sage: #8a9a8b;
+  --color-sage-light: #e8ede8;
+  --font-display: var(--font-cormorant);
+  --font-body: var(--font-dm-sans);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-navy);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+.section-padding {
+  @apply px-6 py-20 md:px-12 md:py-28 lg:px-20;
+}
+
+.gradient-hero {
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 28, 46, 0.45) 0%,
+    rgba(15, 28, 46, 0.75) 100%
+  );
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib {
+  font-size: 10px !important;
+}
