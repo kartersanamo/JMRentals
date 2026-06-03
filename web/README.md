@@ -75,11 +75,28 @@ When ready to enable online booking:
 
 Planned integrations: database, payments (Stripe), admin dashboard, calendar sync.
 
-## Deployment (Vercel)
+## Deployment (jm.kartersanamo.com — Home Server)
 
-1. Push the repo and import the `web` directory as the project root (or deploy from `web/`).
+This site runs in Docker on port **8004**, routed through the Cloudflare tunnel (`homeserver`).
+
+### Deploy / update
+
+```bash
+cd web
+cp .env.example .env.local   # add Mailgun, Mapbox keys
+./deploy.sh
+sudo systemctl restart cloudflared   # required after first deploy or ingress changes
+```
+
+The tunnel ingress for `jm.kartersanamo.com` → `http://localhost:8004` lives in `/etc/cloudflared/config.yml`.
+
+DNS: `cloudflared tunnel route dns homeserver jm.kartersanamo.com` (already provisioned).
+
+### Alternative: Vercel
+
+1. Push the repo and import the `web` directory as the project root.
 2. Add all environment variables in the Vercel dashboard.
-3. Verify the map pin and contact form after deploy.
+3. Set `NEXT_PUBLIC_SITE_URL` to your production domain.
 
 ## Launch Checklist
 

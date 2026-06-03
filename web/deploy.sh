@@ -28,4 +28,9 @@ docker run -d \
   -e "NEXT_PUBLIC_SITE_URL=${SITE_URL}" \
   "${IMAGE_TAG}"
 
-echo "Done. Site should be available at ${SITE_URL} (after Cloudflare tunnel is configured)."
+echo "Done. Container listening on http://localhost:${HOST_PORT}"
+echo ""
+echo "If this is a new hostname, restart the Cloudflare tunnel to load ingress rules:"
+echo "  sudo systemctl restart cloudflared"
+echo ""
+echo "Public URL: ${SITE_URL}"
