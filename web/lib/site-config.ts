@@ -46,17 +46,17 @@ export const site = {
     "Discover beautifully renovated rental homes along the bayou in Larose, Louisiana. Comfortable interiors, thoughtful amenities, and a welcoming community await you at J&M Rentals.",
   bookingEnabled: false,
   address: {
-    street: "12918 S Main St",
+    street: "13049 West Main Street",
     city: "Larose",
     state: "LA",
     zip: "70373",
   },
   coordinates: {
-    lng: -90.3817,
-    lat: 29.5765,
+    lng: -90.376336,
+    lat: 29.568715,
   },
-  phone: "(985) 000-0000",
-  email: "info@jmrentals.com",
+  phone: "(985) 228-6160",
+  email: "jmrentalllc@gmail.com",
   termsLastUpdated: "June 3, 2026",
   privacyLastUpdated: "June 3, 2026",
   hours: [
@@ -98,7 +98,7 @@ export const site = {
     {
       name: "Two Bedroom Home",
       beds: "2 Beds",
-      baths: "1.5 Baths",
+      baths: "1 Bath Walk-In Closet",
       description: "Renovated home with room to spread out and unwind.",
     },
   ],
@@ -132,8 +132,8 @@ export const site = {
       icon: Paintbrush,
     },
     {
-      title: "Washer & Dryer Hookups",
-      description: "In-unit laundry hookups available for your convenience.",
+      title: "Washer & Dryer On-Site",
+      description: "Special laundry machines available for your convenience.",
       icon: WashingMachine,
     },
     {
@@ -167,12 +167,12 @@ export const site = {
     {
       title: "Responsive Management",
       description:
-        "Dedicated on-site management focused on your comfort and needs.",
+        "Dedicated on-call management focused on your comfort and needs.",
       icon: Shield,
     },
     {
       title: "Flexible Lease Options",
-      description: "12-month lease terms designed for stable, long-term living.",
+      description: "Flexible lease terms designed for comfortable living.",
       icon: Clock,
     },
     {
@@ -251,9 +251,33 @@ export function getDirectionsUrl(): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(getFullAddress())}`;
 }
 
+/** Mapbox preset style slugs (see https://docs.mapbox.com/api/maps/styles/) */
+const MAPBOX_PRESET_SLUGS = new Set([
+  "standard",
+  "streets-v12",
+  "outdoors-v12",
+  "light-v11",
+  "dark-v11",
+  "satellite-v9",
+  "satellite-streets-v12",
+  "navigation-day-v1",
+  "navigation-night-v1",
+]);
+
+export const DEFAULT_MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
+
 export function getMapboxStyle(): string {
-  return (
-    process.env.NEXT_PUBLIC_MAPBOX_STYLE ??
-    "mapbox://styles/mapbox/light-v11"
-  );
+  const raw = process.env.NEXT_PUBLIC_MAPBOX_STYLE?.trim();
+  if (!raw) return DEFAULT_MAPBOX_STYLE;
+
+  const url = raw.startsWith("mapbox://")
+    ? raw
+    : `mapbox://styles/mapbox/${raw.replace(/^mapbox\//, "")}`;
+
+  const slug = url.match(/mapbox:\/\/styles\/mapbox\/([^/?]+)/)?.[1];
+  if (slug && MAPBOX_PRESET_SLUGS.has(slug)) {
+    return url;
+  }
+
+  return DEFAULT_MAPBOX_STYLE;
 }

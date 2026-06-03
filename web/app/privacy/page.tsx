@@ -58,8 +58,7 @@ export default function PrivacyPage() {
             </h2>
             <p>
               Our property map is powered by Mapbox. When you view the map, Mapbox
-              may collect usage data as described in the Mapbox Privacy Policy. A
-              Mapbox access token is required to render the interactive map.
+              may collect usage data as described in the Mapbox Privacy Policy.
             </p>
           </section>
 

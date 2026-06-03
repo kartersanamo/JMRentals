@@ -28,7 +28,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | For map | [Mapbox access token](https://account.mapbox.com/) |
-| `NEXT_PUBLIC_MAPBOX_STYLE` | No | Map style URL (default: `mapbox://styles/mapbox/light-v11`) |
+| `NEXT_PUBLIC_MAPBOX_STYLE` | No | Map style URL (default: `mapbox://styles/mapbox/streets-v12`) |
 | `NEXT_PUBLIC_SITE_URL` | Production | Canonical site URL for metadata |
 | `MAILGUN_API_KEY` | For contact form | Mailgun API key |
 | `MAILGUN_DOMAIN` | For contact form | Verified sending domain |

@@ -31,7 +31,7 @@ echo "Building ${IMAGE_TAG}..."
 docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
 docker build -t "${IMAGE_TAG}" \
   --build-arg "NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=${NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN:-}" \
-  --build-arg "NEXT_PUBLIC_MAPBOX_STYLE=${NEXT_PUBLIC_MAPBOX_STYLE:-mapbox://styles/mapbox/light-v11}" \
+  --build-arg "NEXT_PUBLIC_MAPBOX_STYLE=${NEXT_PUBLIC_MAPBOX_STYLE:-mapbox://styles/mapbox/streets-v12}" \
   --build-arg "NEXT_PUBLIC_SITE_URL=${SITE_URL}" \
   .
 
