@@ -1,13 +1,117 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { ComingSoonBanner } from "@/components/ui/ComingSoonBanner";
 import { contactSchema, type ContactFormData } from "@/lib/validators/contact";
+import { site } from "@/lib/site-config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-export function ContactForm() {
+/** Set to true when Mailgun / contact API is ready. */
+const CONTACT_FORM_ENABLED = false;
+
+const disabledFieldClass =
+  "w-full border border-navy/20 bg-cream/60 px-4 py-3 text-navy/50 cursor-not-allowed";
+
+function ContactFormComingSoon() {
+  return (
+    <div className="space-y-5">
+      <ComingSoonBanner
+        title="Online Contact Form — Coming Soon"
+        description={`We're setting up messaging on the site. For now, please call us at ${site.phone} or email ${site.email}.`}
+      />
+      <fieldset disabled className="space-y-5 opacity-80" aria-label="Contact form preview">
+        <div className="grid sm:grid-cols-2 gap-5">
+          <div>
+            <label
+              htmlFor="firstName-preview"
+              className="block text-xs uppercase tracking-widest text-navy/70 mb-2"
+            >
+              First Name <span className="text-gold">*</span>
+            </label>
+            <input
+              id="firstName-preview"
+              disabled
+              className={disabledFieldClass}
+              placeholder="First name"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="lastName-preview"
+              className="block text-xs uppercase tracking-widest text-navy/70 mb-2"
+            >
+              Last Name <span className="text-gold">*</span>
+            </label>
+            <input
+              id="lastName-preview"
+              disabled
+              className={disabledFieldClass}
+              placeholder="Last name"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="email-preview"
+            className="block text-xs uppercase tracking-widest text-navy/70 mb-2"
+          >
+            Email Address <span className="text-gold">*</span>
+          </label>
+          <input
+            id="email-preview"
+            type="email"
+            disabled
+            className={disabledFieldClass}
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="phone-preview"
+            className="block text-xs uppercase tracking-widest text-navy/70 mb-2"
+          >
+            Phone Number
+          </label>
+          <input
+            id="phone-preview"
+            type="tel"
+            disabled
+            className={disabledFieldClass}
+            placeholder="(555) 555-5555"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="message-preview"
+            className="block text-xs uppercase tracking-widest text-navy/70 mb-2"
+          >
+            Message <span className="text-gold">*</span>
+          </label>
+          <textarea
+            id="message-preview"
+            rows={5}
+            disabled
+            className={`${disabledFieldClass} resize-y`}
+            placeholder="Your message"
+          />
+          <p className="mt-1 text-xs text-navy/50 text-right">512 characters left</p>
+        </div>
+
+        <Button type="button" variant="primary" size="lg" className="w-full sm:w-auto" disabled>
+          Coming Soon
+        </Button>
+      </fieldset>
+    </div>
+  );
+}
+
+function ContactFormActive() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle"
   );
@@ -196,4 +300,11 @@ export function ContactForm() {
       </Button>
     </form>
   );
+}
+
+export function ContactForm() {
+  if (!CONTACT_FORM_ENABLED) {
+    return <ContactFormComingSoon />;
+  }
+  return <ContactFormActive />;
 }

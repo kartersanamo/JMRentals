@@ -83,10 +83,12 @@ This site runs in Docker on port **8004**, routed through the Cloudflare tunnel 
 
 ```bash
 cd web
-cp .env.example .env.local   # add Mailgun, Mapbox keys
+cp .env.example .env   # Mailgun, Mapbox, etc.
 ./deploy.sh
 sudo systemctl restart cloudflared   # required after first deploy or ingress changes
 ```
+
+`deploy.sh` reads `.env` and passes `NEXT_PUBLIC_*` values into the Docker **build** (they are baked into the client bundle). Runtime secrets (Mailgun) are loaded into the container via `--env-file .env`. `.env` is excluded from the image context via `.dockerignore`.
 
 The tunnel ingress for `jm.kartersanamo.com` → `http://localhost:8004` lives in `/etc/cloudflared/config.yml`.
 

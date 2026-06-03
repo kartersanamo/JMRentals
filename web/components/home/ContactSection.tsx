@@ -12,7 +12,7 @@ export function ContactSection() {
         <SectionHeading
           eyebrow="Get In Touch"
           title="Feel Free to Contact Us"
-          subtitle="Have questions about availability or our properties? We'd love to hear from you."
+          subtitle="Have questions about availability or our properties? Reach out by phone or email — our online form is coming soon."
         />
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
