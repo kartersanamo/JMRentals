@@ -89,6 +89,7 @@ export async function seedDatabase(prisma: PrismaClient) {
           firstName: "Admin",
           lastName: email.split("@")[0] ?? "User",
           mustChangePassword: true,
+          emailVerifiedAt: new Date(),
         },
         update: {},
       });

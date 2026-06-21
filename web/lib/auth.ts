@@ -2,9 +2,13 @@ import { db } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 import { getRoleHome } from "@/lib/rbac";
 import type { UserRole } from "@prisma/client";
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
+
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = "email_not_verified";
+}
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -65,6 +69,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           user.passwordHash
         );
         if (!valid) return null;
+
+        if (user.role === "GUEST" && !user.emailVerifiedAt) {
+          throw new EmailNotVerifiedError();
+        }
 
         return {
           id: user.id,

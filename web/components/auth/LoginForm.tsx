@@ -17,6 +17,7 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/portal";
   const passwordUpdated = searchParams.get("passwordUpdated") === "1";
+  const verified = searchParams.get("verified") === "1";
   const [error, setError] = useState("");
 
   const {
@@ -36,6 +37,13 @@ export function LoginForm() {
     });
 
     if (result?.error) {
+      if (result.code === "email_not_verified") {
+        setError("Please verify your email before signing in.");
+        router.push(
+          `/verify-email?email=${encodeURIComponent(data.email.toLowerCase())}`
+        );
+        return;
+      }
       setError("Invalid email or password.");
       return;
     }
@@ -49,6 +57,11 @@ export function LoginForm() {
       {passwordUpdated && (
         <p className="text-sm text-green-800 bg-green-50 p-3 mb-4">
           Password updated. Sign in with your new password.
+        </p>
+      )}
+      {verified && (
+        <p className="text-sm text-green-800 bg-green-50 p-3 mb-4">
+          Email verified. You can sign in now.
         </p>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>

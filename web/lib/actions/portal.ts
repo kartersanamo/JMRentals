@@ -172,6 +172,7 @@ export async function createUserAccount(formData: FormData) {
       role: parsed.data.role,
       createdById: session.user.id,
       mustChangePassword: true,
+      emailVerifiedAt: new Date(),
       residentProfile:
         parsed.data.role === "RESIDENT"
           ? { create: { checklistProgress: await getDefaultChecklist() } }

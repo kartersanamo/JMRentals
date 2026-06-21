@@ -35,7 +35,7 @@ export default function RegisterPage() {
       setError(json.error ?? "Registration failed.");
       return;
     }
-    router.push("/login?registered=1");
+    router.push(`/verify-email?email=${encodeURIComponent(json.email)}`);
   };
 
   return (

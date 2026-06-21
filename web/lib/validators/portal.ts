@@ -11,6 +11,18 @@ export const registerSchema = z.object({
   phone: z.string().max(30).optional(),
 });
 
+export const verifyEmailSchema = z.object({
+  email: z.string().email("Valid email required"),
+  code: z
+    .string()
+    .length(6, "Enter the 6-digit code")
+    .regex(/^\d{6}$/, "Code must be 6 digits"),
+});
+
+export const resendVerificationSchema = z.object({
+  email: z.string().email("Valid email required"),
+});
+
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),

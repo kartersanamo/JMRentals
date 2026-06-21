@@ -8,7 +8,9 @@ export default auth((req) => {
   const isLoggedIn = !!session?.user;
 
   const isAuthPage =
-    pathname === "/login" || pathname === "/register";
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/verify-email";
   const isPortal = pathname.startsWith("/portal");
 
   if (isPortal && !isLoggedIn) {
@@ -39,5 +41,6 @@ export const config = {
     "/portal/:path*",
     "/login",
     "/register",
+    "/verify-email",
   ],
 };
