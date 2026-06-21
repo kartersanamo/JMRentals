@@ -1,12 +1,49 @@
 "use client";
 
 import type { UserRole } from "@prisma/client";
-import type { PortalNavItem } from "@/lib/portal-nav";
+import type { PortalNavIcon, PortalNavItem } from "@/lib/portal-nav";
 import { site } from "@/lib/site-config";
+import {
+  Building2,
+  ClipboardList,
+  CreditCard,
+  FileText,
+  Home,
+  LayoutDashboard,
+  Megaphone,
+  Menu,
+  MessageSquare,
+  ScrollText,
+  Settings,
+  Shield,
+  User,
+  Users,
+  Wrench,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+
+const navIcons: Record<
+  PortalNavIcon,
+  React.ComponentType<{ className?: string }>
+> = {
+  "layout-dashboard": LayoutDashboard,
+  users: Users,
+  shield: Shield,
+  building: Building2,
+  home: Home,
+  clipboard: ClipboardList,
+  wrench: Wrench,
+  megaphone: Megaphone,
+  scroll: ScrollText,
+  settings: Settings,
+  user: User,
+  file: FileText,
+  "credit-card": CreditCard,
+  message: MessageSquare,
+};
 
 interface PortalSidebarProps {
   nav: PortalNavItem[];
@@ -32,7 +69,7 @@ export function PortalSidebar({ nav, user }: PortalSidebarProps) {
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto" aria-label="Portal navigation">
         {nav.map((item) => {
-          const Icon = item.icon;
+          const Icon = navIcons[item.icon];
           const active =
             pathname === item.href ||
             (item.href !== "/portal/admin" &&
