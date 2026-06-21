@@ -6,6 +6,130 @@ import {
 } from "@/components/portal/PortalCard";
 import { upsertUnit } from "@/lib/actions/portal";
 import { db } from "@/lib/db";
+import type { Unit } from "@prisma/client";
+
+const fieldClass = "border border-navy/20 px-4 py-3 bg-white w-full";
+const fieldClassSm = "border border-navy/20 px-3 py-2 text-sm bg-white w-full";
+
+function UnitField({
+  label,
+  htmlFor,
+  children,
+  className = "",
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <label
+        htmlFor={htmlFor}
+        className="block text-xs uppercase tracking-widest text-navy/70 mb-2"
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function UnitFormFields({
+  unit,
+  idPrefix,
+  compact = false,
+}: {
+  unit?: Unit;
+  idPrefix: string;
+  compact?: boolean;
+}) {
+  const fc = compact ? fieldClassSm : fieldClass;
+
+  return (
+    <>
+      <UnitField label="Unit name" htmlFor={`${idPrefix}-name`}>
+        <input
+          id={`${idPrefix}-name`}
+          name="name"
+          required
+          defaultValue={unit?.name}
+          placeholder="e.g. One Bedroom Classic"
+          className={fc}
+        />
+      </UnitField>
+      <UnitField label="Availability status" htmlFor={`${idPrefix}-status`}>
+        <select
+          id={`${idPrefix}-status`}
+          name="status"
+          defaultValue={unit?.status ?? "AVAILABLE"}
+          className={fc}
+        >
+          <option value="AVAILABLE">Available</option>
+          <option value="OCCUPIED">Occupied</option>
+          <option value="MAINTENANCE">Maintenance</option>
+        </select>
+      </UnitField>
+      <UnitField label="Bedrooms" htmlFor={`${idPrefix}-beds`}>
+        <input
+          id={`${idPrefix}-beds`}
+          name="beds"
+          required
+          defaultValue={unit?.beds}
+          placeholder="e.g. 1 Bed or Studio"
+          className={fc}
+        />
+      </UnitField>
+      <UnitField label="Bathrooms" htmlFor={`${idPrefix}-baths`}>
+        <input
+          id={`${idPrefix}-baths`}
+          name="baths"
+          required
+          defaultValue={unit?.baths}
+          placeholder="e.g. 1 Bath"
+          className={fc}
+        />
+      </UnitField>
+      <UnitField label="Monthly rent (USD)" htmlFor={`${idPrefix}-rent`}>
+        <input
+          id={`${idPrefix}-rent`}
+          name="monthlyRent"
+          type="number"
+          step="0.01"
+          min="0"
+          required
+          defaultValue={unit ? Number(unit.monthlyRent) : undefined}
+          placeholder="e.g. 1050"
+          className={fc}
+        />
+      </UnitField>
+      <UnitField label="Property address" htmlFor={`${idPrefix}-address`}>
+        <input
+          id={`${idPrefix}-address`}
+          name="address"
+          defaultValue={unit?.address ?? ""}
+          placeholder="Street, city, state, zip"
+          className={fc}
+        />
+      </UnitField>
+      <UnitField
+        label="Description"
+        htmlFor={`${idPrefix}-description`}
+        className="sm:col-span-2"
+      >
+        <textarea
+          id={`${idPrefix}-description`}
+          name="description"
+          rows={compact ? 2 : 3}
+          required
+          defaultValue={unit?.description}
+          placeholder="Short summary shown to guests browsing units"
+          className={`${fc} resize-y`}
+        />
+      </UnitField>
+    </>
+  );
+}
 
 export default async function AdminUnitsPage() {
   const units = await db.unit.findMany({ orderBy: { name: "asc" } });
@@ -14,42 +138,34 @@ export default async function AdminUnitsPage() {
     <div>
       <PortalPageHeader title="Units" />
       <PortalCard title="Add Unit" className="mb-8">
-        <ActionForm action={upsertUnit} successMessage="Unit saved." className="grid sm:grid-cols-2 gap-4">
-          <input name="name" required placeholder="Unit name" className="border border-navy/20 px-4 py-3 bg-white" />
-          <input name="beds" required placeholder="Beds" className="border border-navy/20 px-4 py-3 bg-white" />
-          <input name="baths" required placeholder="Baths" className="border border-navy/20 px-4 py-3 bg-white" />
-          <input name="monthlyRent" type="number" step="0.01" required placeholder="Monthly rent" className="border border-navy/20 px-4 py-3 bg-white" />
-          <select name="status" defaultValue="AVAILABLE" className="border border-navy/20 px-4 py-3 bg-white">
-            <option value="AVAILABLE">Available</option>
-            <option value="OCCUPIED">Occupied</option>
-            <option value="MAINTENANCE">Maintenance</option>
-          </select>
-          <input name="address" placeholder="Address" className="border border-navy/20 px-4 py-3 bg-white" />
-          <textarea name="description" rows={3} required placeholder="Description" className="border border-navy/20 px-4 py-3 bg-white sm:col-span-2 resize-y" />
+        <ActionForm
+          action={upsertUnit}
+          successMessage="Unit saved."
+          submitLabel="Add unit"
+          className="grid sm:grid-cols-2 gap-4"
+        >
+          <UnitFormFields idPrefix="new" />
         </ActionForm>
       </PortalCard>
       <PortalCard title="All Units">
-        <ul className="space-y-4">
+        <ul className="space-y-6">
           {units.map((u) => (
             <li key={u.id} className="border border-navy/10 p-4">
               <div className="flex justify-between mb-2">
                 <p className="font-medium text-navy">{u.name}</p>
                 <StatusBadge status={u.status} />
               </div>
-              <p className="text-sm text-navy/70">{u.beds} · {u.baths} · ${Number(u.monthlyRent)}/mo</p>
-              <ActionForm action={upsertUnit} successMessage="Unit updated." className="mt-3 grid sm:grid-cols-2 gap-2">
+              <p className="text-sm text-navy/70 mb-4">
+                {u.beds} · {u.baths} · ${Number(u.monthlyRent)}/mo
+              </p>
+              <ActionForm
+                action={upsertUnit}
+                successMessage="Unit updated."
+                submitLabel="Save changes"
+                className="grid sm:grid-cols-2 gap-4"
+              >
                 <input type="hidden" name="id" value={u.id} />
-                <input name="name" defaultValue={u.name} className="border border-navy/20 px-3 py-2 text-sm bg-white" />
-                <select name="status" defaultValue={u.status} className="border border-navy/20 px-3 py-2 text-sm bg-white">
-                  <option value="AVAILABLE">Available</option>
-                  <option value="OCCUPIED">Occupied</option>
-                  <option value="MAINTENANCE">Maintenance</option>
-                </select>
-                <input name="beds" defaultValue={u.beds} className="border border-navy/20 px-3 py-2 text-sm bg-white" />
-                <input name="baths" defaultValue={u.baths} className="border border-navy/20 px-3 py-2 text-sm bg-white" />
-                <input name="monthlyRent" type="number" step="0.01" defaultValue={Number(u.monthlyRent)} className="border border-navy/20 px-3 py-2 text-sm bg-white" />
-                <input name="address" defaultValue={u.address ?? ""} className="border border-navy/20 px-3 py-2 text-sm bg-white" />
-                <textarea name="description" rows={2} defaultValue={u.description} className="border border-navy/20 px-3 py-2 text-sm bg-white sm:col-span-2" />
+                <UnitFormFields idPrefix={u.id} unit={u} compact />
               </ActionForm>
             </li>
           ))}
