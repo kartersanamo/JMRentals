@@ -28,10 +28,29 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+export const previousJobSchema = z.object({
+  employer: z.string().min(1, "Employer name required").max(120),
+  position: z.string().min(1, "Position required").max(120),
+  startDate: z.string().min(1, "Start date required"),
+  endDate: z.string().min(1, "End date required"),
+});
+
+export const employmentDetailsSchema = z.object({
+  currentEmployer: z.string().min(1, "Current employer required").max(120),
+  currentPosition: z.string().min(1, "Current position required").max(120),
+  employmentStartDate: z.string().min(1, "Employment start date required"),
+  yearlyIncome: z.coerce
+    .number({ invalid_type_error: "Enter a valid yearly income" })
+    .positive("Yearly income must be greater than zero"),
+  employerPhone: z.string().max(30).optional(),
+  supervisorName: z.string().max(120).optional(),
+  previousJobs: z.array(previousJobSchema).max(10),
+});
+
 export const applicationSchema = z.object({
   desiredUnitId: z.string().optional(),
   moveInDate: z.string().optional(),
-  employmentInfo: z.string().min(10, "Please provide employment details").max(2000),
+  employmentDetails: employmentDetailsSchema,
   additionalNotes: z.string().max(2000).optional(),
 });
 
@@ -88,6 +107,7 @@ export const unitSchema = z.object({
   monthlyRent: z.coerce.number().positive(),
   status: z.enum(["AVAILABLE", "OCCUPIED", "MAINTENANCE"]),
   address: z.string().max(200).optional(),
+  imageUrl: z.string().max(500).optional(),
 });
 
 export const leaseSchema = z.object({
@@ -128,3 +148,5 @@ export const checklistSchema = z.record(z.boolean());
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ApplicationInput = z.infer<typeof applicationSchema>;
+export type EmploymentDetails = z.infer<typeof employmentDetailsSchema>;
+export type PreviousJob = z.infer<typeof previousJobSchema>;

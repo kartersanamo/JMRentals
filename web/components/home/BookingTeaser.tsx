@@ -2,6 +2,7 @@ import { AnimateIn } from "@/components/ui/AnimateIn";
 import { ButtonLink } from "@/components/ui/Button";
 import { ComingSoonBanner } from "@/components/ui/ComingSoonBanner";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { UnitBrowseCard } from "@/components/units/UnitBrowseCard";
 import { site } from "@/lib/site-config";
 import { Bed, Calendar, Search } from "lucide-react";
 
@@ -35,24 +36,20 @@ export function BookingTeaser() {
         <div className="grid md:grid-cols-3 gap-8">
           {site.floorPlans.map((plan, i) => (
             <AnimateIn key={plan.name} delay={i * 0.1}>
-              <article className="relative bg-cream overflow-hidden border border-navy/10 group">
-                <div className="p-8 pb-24">
-                  <p className="text-xs uppercase tracking-widest text-gold mb-2">
-                    {plan.beds} · {plan.baths}
-                  </p>
-                  <h3 className="font-display text-3xl text-navy mb-3">
-                    {plan.name}
-                  </h3>
-                  <p className="text-navy/65 text-sm leading-relaxed">
-                    {plan.description}
-                  </p>
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center bg-navy/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="text-cream text-sm uppercase tracking-widest font-medium">
-                    Coming Soon
-                  </span>
-                </div>
-              </article>
+              <UnitBrowseCard
+                name={plan.name}
+                beds={plan.beds}
+                baths={plan.baths}
+                description={plan.description}
+                imageUrl={plan.imageUrl}
+                overlay={
+                  <div className="absolute inset-0 flex items-center justify-center bg-navy/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="text-cream text-sm uppercase tracking-widest font-medium">
+                      Coming Soon
+                    </span>
+                  </div>
+                }
+              />
             </AnimateIn>
           ))}
         </div>

@@ -1,4 +1,5 @@
 import { ActionForm } from "@/components/portal/ActionForm";
+import { EmploymentSummary } from "@/components/portal/EmploymentSummary";
 import {
   EmptyState,
   PortalCard,
@@ -39,9 +40,16 @@ export default async function StaffApplicationsPage() {
                   </div>
                   <StatusBadge status={app.status} />
                 </div>
-                <p className="text-sm text-navy/80 whitespace-pre-wrap mb-3">
-                  {app.employmentInfo}
-                </p>
+                <EmploymentSummary
+                  employmentDetails={app.employmentDetails}
+                  employmentInfo={app.employmentInfo}
+                />
+                {app.additionalNotes && (
+                  <p className="text-sm text-navy/70 mb-3">
+                    <span className="text-navy/50">Notes: </span>
+                    {app.additionalNotes}
+                  </p>
+                )}
                 <ActionForm action={reviewApplication} successMessage="Application updated." className="space-y-2">
                   <input type="hidden" name="id" value={app.id} />
                   <select name="status" defaultValue={app.status} className="border border-navy/20 px-3 py-2 text-sm bg-white">

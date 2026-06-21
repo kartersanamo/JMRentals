@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import { hashPassword } from "../lib/password";
+import { DEFAULT_UNIT_IMAGES } from "../lib/unit-images";
 
 const floorPlans = [
   {
@@ -8,6 +9,7 @@ const floorPlans = [
     baths: "1 Bath",
     description: "Cozy bayou-side living with modern finishes.",
     monthlyRent: 850,
+    imageUrl: DEFAULT_UNIT_IMAGES["Studio Retreat"],
   },
   {
     name: "One Bedroom Classic",
@@ -15,6 +17,7 @@ const floorPlans = [
     baths: "1 Bath",
     description: "Spacious layout perfect for comfortable everyday living.",
     monthlyRent: 1050,
+    imageUrl: DEFAULT_UNIT_IMAGES["One Bedroom Classic"],
   },
   {
     name: "Two Bedroom Home",
@@ -22,6 +25,7 @@ const floorPlans = [
     baths: "1 Bath Walk-In Closet",
     description: "Renovated home with room to spread out and unwind.",
     monthlyRent: 1250,
+    imageUrl: DEFAULT_UNIT_IMAGES["Two Bedroom Home"],
   },
 ];
 
@@ -54,6 +58,11 @@ export async function seedDatabase(prisma: PrismaClient) {
           address,
           status: "AVAILABLE",
         },
+      });
+    } else if (!existing.imageUrl && plan.imageUrl) {
+      await prisma.unit.update({
+        where: { id: existing.id },
+        data: { imageUrl: plan.imageUrl },
       });
     }
   }

@@ -6,7 +6,9 @@ import {
 } from "@/components/portal/PortalCard";
 import { upsertUnit } from "@/lib/actions/portal";
 import { db } from "@/lib/db";
+import { getUnitImageAlt, getUnitImageUrl } from "@/lib/unit-images";
 import type { Unit } from "@prisma/client";
+import Image from "next/image";
 
 const fieldClass = "border border-navy/20 px-4 py-3 bg-white w-full";
 const fieldClassSm = "border border-navy/20 px-3 py-2 text-sm bg-white w-full";
@@ -112,6 +114,16 @@ function UnitFormFields({
           className={fc}
         />
       </UnitField>
+      <UnitField label="Photo URL" htmlFor={`${idPrefix}-image`}>
+        <input
+          id={`${idPrefix}-image`}
+          name="imageUrl"
+          type="url"
+          defaultValue={unit?.imageUrl ?? ""}
+          placeholder="/images/Inside1.jpg"
+          className={fc}
+        />
+      </UnitField>
       <UnitField
         label="Description"
         htmlFor={`${idPrefix}-description`}
@@ -151,13 +163,26 @@ export default async function AdminUnitsPage() {
         <ul className="space-y-6">
           {units.map((u) => (
             <li key={u.id} className="border border-navy/10 p-4">
-              <div className="flex justify-between mb-2">
-                <p className="font-medium text-navy">{u.name}</p>
-                <StatusBadge status={u.status} />
+              <div className="flex gap-4 mb-4">
+                <div className="relative w-28 h-20 shrink-0 bg-navy/5 overflow-hidden">
+                  <Image
+                    src={getUnitImageUrl(u.imageUrl, u.name)}
+                    alt={getUnitImageAlt(u.name)}
+                    fill
+                    className="object-cover"
+                    sizes="112px"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between gap-2 mb-1">
+                    <p className="font-medium text-navy">{u.name}</p>
+                    <StatusBadge status={u.status} />
+                  </div>
+                  <p className="text-sm text-navy/70">
+                    {u.beds} · {u.baths} · ${Number(u.monthlyRent)}/mo
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-navy/70 mb-4">
-                {u.beds} · {u.baths} · ${Number(u.monthlyRent)}/mo
-              </p>
               <ActionForm
                 action={upsertUnit}
                 successMessage="Unit updated."

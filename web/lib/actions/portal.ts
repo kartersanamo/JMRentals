@@ -28,10 +28,18 @@ function revalidatePortal() {
 
 export async function submitApplication(formData: FormData) {
   const session = await requireRole("GUEST");
+
+  let employmentDetails: unknown;
+  try {
+    employmentDetails = JSON.parse(String(formData.get("employmentDetails")));
+  } catch {
+    return { error: "Invalid employment data." };
+  }
+
   const parsed = applicationSchema.safeParse({
     desiredUnitId: formData.get("desiredUnitId") || undefined,
     moveInDate: formData.get("moveInDate") || undefined,
-    employmentInfo: formData.get("employmentInfo"),
+    employmentDetails,
     additionalNotes: formData.get("additionalNotes") || undefined,
   });
   if (!parsed.success) return { error: "Invalid application data." };
@@ -43,7 +51,7 @@ export async function submitApplication(formData: FormData) {
       moveInDate: parsed.data.moveInDate
         ? new Date(parsed.data.moveInDate)
         : undefined,
-      employmentInfo: parsed.data.employmentInfo,
+      employmentDetails: parsed.data.employmentDetails,
       additionalNotes: parsed.data.additionalNotes,
     },
   });
@@ -451,6 +459,7 @@ export async function upsertUnit(formData: FormData) {
     monthlyRent: formData.get("monthlyRent"),
     status: formData.get("status"),
     address: formData.get("address") || undefined,
+    imageUrl: formData.get("imageUrl") || undefined,
   });
   if (!parsed.success) return { error: "Invalid unit data." };
 

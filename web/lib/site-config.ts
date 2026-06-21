@@ -88,18 +88,21 @@ export const site = {
       beds: "Studio",
       baths: "1 Bath",
       description: "Cozy bayou-side living with modern finishes.",
+      imageUrl: "/images/Inside6.jpg",
     },
     {
       name: "One Bedroom Classic",
       beds: "1 Bed",
       baths: "1 Bath",
       description: "Spacious layout perfect for comfortable everyday living.",
+      imageUrl: "/images/Inside2.jpg",
     },
     {
       name: "Two Bedroom Home",
       beds: "2 Beds",
       baths: "1 Bath Walk-In Closet",
       description: "Renovated home with room to spread out and unwind.",
+      imageUrl: "/images/Inside4.jpg",
     },
   ],
   amenities: [
