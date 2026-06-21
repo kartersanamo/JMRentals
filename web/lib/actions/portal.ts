@@ -4,6 +4,22 @@ import { createAuditLog } from "@/lib/audit";
 import { normalizeJsonString } from "@/lib/json";
 import { auth, requireRole, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  dispatchPortalNotification,
+  notifyAnnouncementPosted,
+  notifyApplicationStatusChanged,
+  notifyApplicationSubmitted,
+  notifyLeaseCreated,
+  notifyMaintenanceStatusChanged,
+  notifyMaintenanceSubmitted,
+  notifyPaymentRecorded,
+  notifyPortalMessageToStaff,
+  notifyPortalMessageToUser,
+} from "@/lib/notifications/dispatch";
+import {
+  getNotificationsForRole,
+  type NotificationPreferences,
+} from "@/lib/notifications/catalog";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import {
   announcementSchema,
@@ -44,7 +60,7 @@ export async function submitApplication(formData: FormData) {
   });
   if (!parsed.success) return { error: "Invalid application data." };
 
-  await db.application.create({
+  const application = await db.application.create({
     data: {
       guestId: session.user.id,
       desiredUnitId: parsed.data.desiredUnitId,
@@ -55,6 +71,9 @@ export async function submitApplication(formData: FormData) {
       additionalNotes: parsed.data.additionalNotes,
     },
   });
+  await dispatchPortalNotification(() =>
+    notifyApplicationSubmitted(application.id)
+  );
   revalidatePortal();
   return { success: true };
 }
@@ -72,6 +91,9 @@ export async function reviewApplication(formData: FormData) {
     where: { id },
     data: parsed.data,
   });
+  await dispatchPortalNotification(() =>
+    notifyApplicationStatusChanged(id)
+  );
   revalidatePortal();
   return { success: true };
 }
@@ -132,6 +154,18 @@ export async function createLease(formData: FormData) {
       details: `Unit ${parsed.data.unitId}`,
     });
   }
+
+  const unit = await db.unit.findUnique({
+    where: { id: parsed.data.unitId },
+    select: { name: true },
+  });
+  await dispatchPortalNotification(() =>
+    notifyLeaseCreated(
+      parsed.data.residentId,
+      unit?.name ?? "your unit",
+      Number(parsed.data.monthlyRent)
+    )
+  );
 
   revalidatePortal();
   return { success: true };
@@ -345,12 +379,15 @@ export async function submitMaintenance(formData: FormData) {
   });
   if (!parsed.success) return { error: "Invalid maintenance request." };
 
-  await db.maintenanceRequest.create({
+  const request = await db.maintenanceRequest.create({
     data: {
       residentId: session.user.id,
       ...parsed.data,
     },
   });
+  await dispatchPortalNotification(() =>
+    notifyMaintenanceSubmitted(request.id)
+  );
   revalidatePortal();
   return { success: true };
 }
@@ -365,6 +402,9 @@ export async function updateMaintenance(formData: FormData) {
     where: { id },
     data: { status: status as never, staffNotes },
   });
+  await dispatchPortalNotification(() =>
+    notifyMaintenanceStatusChanged(id)
+  );
   revalidatePortal();
   return { success: true };
 }
@@ -378,7 +418,7 @@ export async function createAnnouncement(formData: FormData) {
   });
   if (!parsed.success) return { error: "Invalid announcement." };
 
-  await db.announcement.create({
+  const announcement = await db.announcement.create({
     data: {
       title: parsed.data.title,
       body: parsed.data.body,
@@ -386,6 +426,9 @@ export async function createAnnouncement(formData: FormData) {
       authorId: session.user.id,
     },
   });
+  await dispatchPortalNotification(() =>
+    notifyAnnouncementPosted(announcement.id)
+  );
   revalidatePortal();
   return { success: true };
 }
@@ -412,12 +455,23 @@ export async function sendMessage(formData: FormData) {
     threadId = thread.id;
   }
 
-  await db.message.create({
+  const message = await db.message.create({
     data: {
       threadId,
       senderId: session.user.id,
       body: parsed.data.body,
     },
+  });
+
+  await dispatchPortalNotification(async () => {
+    if (
+      session.user.role === "GUEST" ||
+      session.user.role === "RESIDENT"
+    ) {
+      await notifyPortalMessageToStaff(message.id, session.user.id);
+    } else {
+      await notifyPortalMessageToUser(message.id, session.user.id);
+    }
   });
 
   revalidatePortal();
@@ -435,7 +489,7 @@ export async function createPaymentRecord(formData: FormData) {
   });
   if (!parsed.success) return { error: "Invalid payment data." };
 
-  await db.paymentRecord.create({
+  const payment = await db.paymentRecord.create({
     data: {
       residentId: parsed.data.residentId,
       amount: parsed.data.amount,
@@ -444,6 +498,7 @@ export async function createPaymentRecord(formData: FormData) {
       description: parsed.data.description,
     },
   });
+  await dispatchPortalNotification(() => notifyPaymentRecorded(payment.id));
   revalidatePortal();
   return { success: true };
 }
@@ -542,5 +597,40 @@ export async function changeUserRole(formData: FormData) {
   });
 
   revalidatePortal();
+  return { success: true };
+}
+
+export async function updateNotificationPreferences(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) return { error: "Unauthorized." };
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(formData.get("preferences")));
+  } catch {
+    return { error: "Invalid preferences." };
+  }
+
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { error: "Invalid preferences." };
+  }
+
+  const allowed = getNotificationsForRole(session.user.role);
+  const preferences: NotificationPreferences = {};
+  for (const item of allowed) {
+    const value = (raw as Record<string, unknown>)[item.key];
+    if (typeof value === "boolean") {
+      preferences[item.key] = value;
+    } else {
+      preferences[item.key] = item.defaultEnabled;
+    }
+  }
+
+  await db.user.update({
+    where: { id: session.user.id },
+    data: { emailNotifications: preferences },
+  });
+
+  revalidatePath("/portal/notifications");
   return { success: true };
 }

@@ -79,7 +79,12 @@ export default async function AccountPage() {
           />
         </ActionForm>
       </PortalCard>
-      <p className="mt-6 text-sm text-navy/50">Signed in as {user.email} ({user.role})</p>
+        <p className="mt-6 text-sm text-navy/50">Signed in as {user.email} ({user.role})</p>
+        <p className="mt-2 text-sm">
+          <a href="/portal/notifications" className="text-gold hover:text-navy">
+            Manage email notifications →
+          </a>
+        </p>
     </div>
   );
 }

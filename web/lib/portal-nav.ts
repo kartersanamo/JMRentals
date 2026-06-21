@@ -14,7 +14,8 @@ export type PortalNavIcon =
   | "user"
   | "file"
   | "credit-card"
-  | "message";
+  | "message"
+  | "bell";
 
 export interface PortalNavItem {
   href: string;
@@ -39,6 +40,7 @@ export function getPortalNav(role: UserRole): PortalNavItem[] {
         { href: "/portal/staff/announcements", label: "Announcements", icon: "megaphone" },
         { href: "/portal/admin/audit", label: "Audit Log", icon: "scroll" },
         { href: "/portal/admin/settings", label: "Settings", icon: "settings" },
+        { href: "/portal/notifications", label: "Notifications", icon: "bell" },
         { href: "/portal/account", label: "My Account", icon: "user" },
       ];
     case "STAFF":
@@ -49,6 +51,7 @@ export function getPortalNav(role: UserRole): PortalNavItem[] {
         { href: "/portal/staff/residents", label: "Residents", icon: "home" },
         { href: "/portal/staff/maintenance", label: "Maintenance", icon: "wrench" },
         { href: "/portal/staff/announcements", label: "Announcements", icon: "megaphone" },
+        { href: "/portal/notifications", label: "Notifications", icon: "bell" },
         { href: "/portal/account", label: "My Account", icon: "user" },
       ];
     case "RESIDENT":
@@ -62,6 +65,7 @@ export function getPortalNav(role: UserRole): PortalNavItem[] {
         { href: "/portal/resident/checklist", label: "Move-In Checklist", icon: "clipboard" },
         { href: "/portal/resident/messages", label: "Messages", icon: "message" },
         { href: "/portal/resident/community", label: "Community", icon: "megaphone" },
+        { href: "/portal/notifications", label: "Notifications", icon: "bell" },
         { href: "/portal/account", label: "My Profile", icon: "user" },
       ];
     case "GUEST":
@@ -71,6 +75,7 @@ export function getPortalNav(role: UserRole): PortalNavItem[] {
         { href: "/portal/guest/apply", label: "Apply", icon: "clipboard" },
         { href: "/portal/guest/applications", label: "My Applications", icon: "file" },
         { href: "/portal/guest/messages", label: "Messages", icon: "message" },
+        { href: "/portal/notifications", label: "Notifications", icon: "bell" },
         { href: "/portal/account", label: "My Profile", icon: "user" },
       ];
     default:

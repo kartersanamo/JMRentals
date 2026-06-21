@@ -4,6 +4,7 @@ import type { UserRole } from "@prisma/client";
 import type { PortalNavIcon, PortalNavItem } from "@/lib/portal-nav";
 import { site } from "@/lib/site-config";
 import {
+  Bell,
   Building2,
   ClipboardList,
   CreditCard,
@@ -43,6 +44,7 @@ const navIcons: Record<
   file: FileText,
   "credit-card": CreditCard,
   message: MessageSquare,
+  bell: Bell,
 };
 
 interface PortalSidebarProps {

@@ -1,4 +1,4 @@
-import { getMailgunClient } from "@/lib/mailgun";
+import { getMailgunClient, getMailFromAddress } from "@/lib/mailgun";
 import { hashPassword, verifyPassword } from "@/lib/password";
 
 export const VERIFICATION_CODE_LENGTH = 6;
@@ -23,10 +23,6 @@ export async function verifyVerificationCode(
 
 export function getVerificationExpiry(): Date {
   return new Date(Date.now() + VERIFICATION_CODE_EXPIRY_MS);
-}
-
-export function getMailFromAddress(): string | null {
-  return process.env.MAILGUN_FROM ?? null;
 }
 
 export async function sendGuestVerificationEmail(

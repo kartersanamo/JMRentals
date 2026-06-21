@@ -13,6 +13,10 @@ export function getMailgunClient() {
   return mailgun.client({ username: "api", key: apiKey });
 }
 
+export function getMailFromAddress(): string | null {
+  return process.env.MAILGUN_FROM ?? null;
+}
+
 export function getContactEmailConfig() {
   const to = process.env.CONTACT_TO_EMAIL;
   const from = process.env.MAILGUN_FROM;
