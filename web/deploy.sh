@@ -42,15 +42,14 @@ elif [[ -f .env.local ]]; then
   ENV_FILE_ARGS=(--env-file .env.local)
 fi
 
-echo "Starting container on port ${HOST_PORT}..."
+echo "Starting container on port ${HOST_PORT} (host network — uses DATABASE_URL from .env as-is)..."
 docker run -d \
   --name "${CONTAINER_NAME}" \
   --restart unless-stopped \
-  --add-host=host.docker.internal:host-gateway \
-  -p "${HOST_PORT}:3000" \
+  --network host \
   "${ENV_FILE_ARGS[@]}" \
   -e HOSTNAME=0.0.0.0 \
-  -e PORT=3000 \
+  -e "PORT=${HOST_PORT}" \
   -e "NEXT_PUBLIC_SITE_URL=${SITE_URL}" \
   -e "AUTH_URL=${SITE_URL}" \
   "${IMAGE_TAG}"
