@@ -49,6 +49,16 @@ export const changePasswordSchema = z
     path: ["confirmPassword"],
   });
 
+export const forcedPasswordChangeSchema = z
+  .object({
+    newPassword: z.string().min(8).max(128),
+    confirmPassword: z.string().min(8).max(128),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 export const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),

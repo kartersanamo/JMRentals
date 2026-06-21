@@ -16,6 +16,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/portal";
+  const passwordUpdated = searchParams.get("passwordUpdated") === "1";
   const [error, setError] = useState("");
 
   const {
@@ -45,6 +46,11 @@ export function LoginForm() {
 
   return (
     <>
+      {passwordUpdated && (
+        <p className="text-sm text-green-800 bg-green-50 p-3 mb-4">
+          Password updated. Sign in with your new password.
+        </p>
+      )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
         <div>
           <label htmlFor="email" className="block text-xs uppercase tracking-widest text-navy/70 mb-2">

@@ -2,7 +2,7 @@
 
 import { createAuditLog } from "@/lib/audit";
 import { normalizeJsonString } from "@/lib/json";
-import { auth, requireRole } from "@/lib/auth";
+import { auth, requireRole, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import {
@@ -10,6 +10,7 @@ import {
   applicationReviewSchema,
   applicationSchema,
   changePasswordSchema,
+  forcedPasswordChangeSchema,
   checklistSchema,
   createUserSchema,
   leaseSchema,
@@ -281,15 +282,34 @@ export async function changePassword(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { error: "Unauthorized." };
 
+  const user = await db.user.findUnique({ where: { id: session.user.id } });
+  if (!user) return { error: "User not found." };
+
+  const usingTemporaryPassword = user.mustChangePassword;
+
+  if (usingTemporaryPassword) {
+    const parsed = forcedPasswordChangeSchema.safeParse({
+      newPassword: formData.get("newPassword"),
+      confirmPassword: formData.get("confirmPassword"),
+    });
+    if (!parsed.success) return { error: "Invalid password data." };
+
+    const passwordHash = await hashPassword(parsed.data.newPassword);
+    await db.user.update({
+      where: { id: session.user.id },
+      data: { passwordHash, mustChangePassword: false },
+    });
+
+    revalidatePortal();
+    await signOut({ redirectTo: "/login?passwordUpdated=1" });
+  }
+
   const parsed = changePasswordSchema.safeParse({
     currentPassword: formData.get("currentPassword"),
     newPassword: formData.get("newPassword"),
     confirmPassword: formData.get("confirmPassword"),
   });
   if (!parsed.success) return { error: "Invalid password data." };
-
-  const user = await db.user.findUnique({ where: { id: session.user.id } });
-  if (!user) return { error: "User not found." };
 
   const valid = await verifyPassword(
     parsed.data.currentPassword,

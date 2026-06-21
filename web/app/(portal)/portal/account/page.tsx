@@ -39,11 +39,44 @@ export default async function AccountPage() {
           )}
         </ActionForm>
       </PortalCard>
-      <PortalCard title="Change Password">
-        <ActionForm action={changePassword} successMessage="Password updated." className="space-y-4">
-          <input type="password" name="currentPassword" required placeholder="Current password" className="w-full border border-navy/20 px-4 py-3 bg-white" />
-          <input type="password" name="newPassword" required placeholder="New password" className="w-full border border-navy/20 px-4 py-3 bg-white" />
-          <input type="password" name="confirmPassword" required placeholder="Confirm new password" className="w-full border border-navy/20 px-4 py-3 bg-white" />
+      <PortalCard title={session.user.mustChangePassword ? "Set New Password" : "Change Password"}>
+        {session.user.mustChangePassword ? (
+          <p className="text-sm text-navy/60 mb-4">
+            You&apos;re using a temporary password. Choose a new password below — no need to enter the temporary one again.
+          </p>
+        ) : null}
+        <ActionForm
+          action={changePassword}
+          successMessage="Password updated."
+          submitLabel={session.user.mustChangePassword ? "Set new password" : "Update password"}
+          className="space-y-4"
+        >
+          {!session.user.mustChangePassword && (
+            <input
+              type="password"
+              name="currentPassword"
+              required
+              placeholder="Current password"
+              autoComplete="current-password"
+              className="w-full border border-navy/20 px-4 py-3 bg-white"
+            />
+          )}
+          <input
+            type="password"
+            name="newPassword"
+            required
+            placeholder="New password"
+            autoComplete="new-password"
+            className="w-full border border-navy/20 px-4 py-3 bg-white"
+          />
+          <input
+            type="password"
+            name="confirmPassword"
+            required
+            placeholder="Confirm new password"
+            autoComplete="new-password"
+            className="w-full border border-navy/20 px-4 py-3 bg-white"
+          />
         </ActionForm>
       </PortalCard>
       <p className="mt-6 text-sm text-navy/50">Signed in as {user.email} ({user.role})</p>
