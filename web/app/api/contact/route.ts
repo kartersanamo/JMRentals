@@ -1,13 +1,8 @@
-import { getContactEmailConfig, getMailgunClient } from "@/lib/mailgun";
+import { sendContactFormEmail } from "@/lib/contact-mail";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-ip";
 import { contactSchema } from "@/lib/validators/contact";
 import { NextRequest, NextResponse } from "next/server";
-
-function getClientIp(request: NextRequest): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() ?? "unknown";
-  return request.headers.get("x-real-ip") ?? "unknown";
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,37 +35,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const mailgun = getMailgunClient();
-    const config = getContactEmailConfig();
+    try {
+      await sendContactFormEmail({
+        firstName,
+        lastName,
+        email,
+        phone,
+        message,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "MAILGUN_NOT_CONFIGURED") {
+        console.error("Contact form: Mailgun is not configured");
+        return NextResponse.json(
+          {
+            error:
+              "Contact form is temporarily unavailable. Please call or email us directly.",
+          },
+          { status: 503 }
+        );
+      }
 
-    if (!mailgun || !config) {
-      console.error("Mailgun is not configured");
-      return NextResponse.json(
-        {
-          error:
-            "Contact form is temporarily unavailable. Please call or email us directly.",
-        },
-        { status: 503 }
-      );
+      if (error instanceof Error && error.message === "NO_CONTACT_RECIPIENTS") {
+        console.error(
+          "Contact form: no recipients — enable Website contact form notifications for staff/admin or set CONTACT_TO_EMAIL"
+        );
+        return NextResponse.json(
+          {
+            error:
+              "Contact form is temporarily unavailable. Please call or email us directly.",
+          },
+          { status: 503 }
+        );
+      }
+
+      throw error;
     }
-
-    const fullName = `${firstName} ${lastName}`;
-    const phoneLine = phone ? `\nPhone: ${phone}` : "";
-
-    await mailgun.messages.create(config.domain, {
-      from: config.from,
-      to: [config.to],
-      subject: `New inquiry from ${fullName} — J&M Rentals`,
-      text: `New contact form submission from the J&M Rentals website.
-
-Name: ${fullName}
-Email: ${email}${phoneLine}
-
-Message:
-${message}
-`,
-      "h:Reply-To": email,
-    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

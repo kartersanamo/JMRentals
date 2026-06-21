@@ -9,7 +9,8 @@ export type NotificationKey =
   | "portal_message_to_user"
   | "announcement_posted"
   | "payment_recorded"
-  | "lease_created";
+  | "lease_created"
+  | "website_contact_form";
 
 export type NotificationCategory =
   | "applications"
@@ -65,6 +66,14 @@ export const NOTIFICATION_CATALOG: NotificationDefinition[] = [
     category: "messages",
     label: "New guest & resident messages",
     description: "When someone sends a message through the portal",
+    roles: ["ADMIN", "STAFF"],
+    defaultEnabled: true,
+  },
+  {
+    key: "website_contact_form",
+    category: "messages",
+    label: "Website contact form",
+    description: "When someone submits the contact form on the public website",
     roles: ["ADMIN", "STAFF"],
     defaultEnabled: true,
   },
