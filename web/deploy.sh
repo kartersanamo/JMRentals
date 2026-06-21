@@ -46,11 +46,13 @@ echo "Starting container on port ${HOST_PORT}..."
 docker run -d \
   --name "${CONTAINER_NAME}" \
   --restart unless-stopped \
+  --add-host=host.docker.internal:host-gateway \
   -p "${HOST_PORT}:3000" \
   "${ENV_FILE_ARGS[@]}" \
   -e HOSTNAME=0.0.0.0 \
   -e PORT=3000 \
   -e "NEXT_PUBLIC_SITE_URL=${SITE_URL}" \
+  -e "AUTH_URL=${SITE_URL}" \
   "${IMAGE_TAG}"
 
 echo "Done. Container listening on http://localhost:${HOST_PORT}"
@@ -59,3 +61,6 @@ echo "If this is a new hostname, restart the Cloudflare tunnel to load ingress r
 echo "  sudo systemctl restart cloudflared"
 echo ""
 echo "Public URL: ${SITE_URL}"
+echo ""
+echo "First-time portal setup (on host, with MySQL configured in .env):"
+echo "  npm run db:deploy && npm run db:seed"

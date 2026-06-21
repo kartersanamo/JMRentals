@@ -1,5 +1,4 @@
-import { Footer } from "@/components/layout/Footer";
-import { Navbar } from "@/components/layout/Navbar";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import { site } from "@/lib/site-config";
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
@@ -69,15 +68,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${cormorant.variable} ${dmSans.variable}`}>
       <body className="antialiased">
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:bg-gold focus:text-navy focus:px-4 focus:py-2"
-        >
-          Skip to main content
-        </a>
-        <Navbar />
-        <main id="main-content">{children}</main>
-        <Footer />
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

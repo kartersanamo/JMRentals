@@ -1,5 +1,6 @@
 "use client";
 
+import { NavbarAuth } from "@/components/layout/NavbarAuth";
 import { site } from "@/lib/site-config";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -60,6 +61,7 @@ export function Navbar() {
               </Link>
             </li>
           ))}
+          <NavbarAuth />
           <li>
             <Link
               href="/book"
@@ -98,6 +100,15 @@ export function Navbar() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="text-xl font-display text-gold hover:text-cream transition-colors"
+              >
+                Sign In / Portal
+              </Link>
+            </li>
             <li>
               <Link
                 href="/book"

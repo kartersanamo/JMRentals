@@ -1,110 +1,106 @@
 # J&M Rentals Website
 
-A premium marketing website for J&M Rentals in Larose, Louisiana — built with Next.js 15, Tailwind CSS, Mapbox, and Mailgun.
+A premium marketing website and resident portal for J&M Rentals in Larose, Louisiana — built with Next.js 15, Tailwind CSS, Mapbox, MySQL, and Auth.js.
 
 ## Features
 
-- Catoctin-inspired landing page with hero, amenities, gallery, neighborhood, and contact sections
+### Public site
+- Landing page with hero, amenities, gallery, neighborhood, and contact sections
 - Dedicated pages: Amenities, Gallery, Book (Coming Soon), Terms, Privacy
 - Interactive photo gallery with lightbox and inside/outside filters
-- Mapbox map with property pin at 12918 S Main St, Larose, LA
-- Contact form with Mailgun email delivery, honeypot, and rate limiting
-- Future-ready online booking placeholders
+- Mapbox map with property pin
+- Contact form with Mailgun email delivery (optional)
+
+### Login portal (`/login`, `/portal`)
+Four role-based dashboards:
+- **Guest** — register, browse units, apply, track applications, message staff
+- **Staff** — manage guests, review applications, residents, maintenance, announcements
+- **Resident** — lease, documents, maintenance, payments ledger, home info, checklist, messages, community
+- **Admin** — full governance: admins, staff, users, units, leases, audit log, settings
 
 ## Quick Start
 
 ```bash
 cd web
-cp .env.example .env.local
-# Edit .env.local with your tokens (see below)
+cp .env.example .env
+# Configure DATABASE_URL, AUTH_SECRET, ADMIN_SEED_* (see below)
 npm install
+npm run db:deploy    # run migrations (requires MySQL)
+npm run db:seed      # seed units + admin accounts
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Portal: [http://localhost:3000/login](http://localhost:3000/login).
+
+## MySQL Setup
+
+Create a database and user on your existing MySQL server:
+
+```sql
+CREATE DATABASE jm_rentals_portal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'jm_portal'@'localhost' IDENTIFIED BY 'your_secure_password';
+CREATE USER 'jm_portal'@'%' IDENTIFIED BY 'your_secure_password';
+GRANT ALL PRIVILEGES ON jm_rentals_portal.* TO 'jm_portal'@'localhost';
+GRANT ALL PRIVILEGES ON jm_rentals_portal.* TO 'jm_portal'@'%';
+FLUSH PRIVILEGES;
+```
+
+Then set `DATABASE_URL` in `.env`:
+
+```
+DATABASE_URL=mysql://jm_portal:your_secure_password@localhost:3306/jm_rentals_portal
+```
+
+For Docker deployments, use `host.docker.internal` as the host (see `.env.example`).
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | For map | [Mapbox access token](https://account.mapbox.com/) |
-| `NEXT_PUBLIC_MAPBOX_STYLE` | No | Map style URL (default: `mapbox://styles/mapbox/streets-v12`) |
-| `NEXT_PUBLIC_SITE_URL` | Production | Canonical site URL for metadata |
-| `MAILGUN_API_KEY` | For contact form | Mailgun API key |
-| `MAILGUN_DOMAIN` | For contact form | Verified sending domain |
-| `MAILGUN_FROM` | For contact form | Sender, e.g. `J&M Rentals <noreply@mg.yourdomain.com>` |
-| `CONTACT_TO_EMAIL` | For contact form | Inbox that receives form submissions |
-| `CONTACT_RATE_LIMIT_PER_HOUR` | No | Default `5` |
+| `DATABASE_URL` | Portal | MySQL connection string |
+| `AUTH_SECRET` | Portal | Random secret (`openssl rand -base64 32`) |
+| `AUTH_URL` | Portal | Production URL, e.g. `https://jm.kartersanamo.com` |
+| `ADMIN_SEED_EMAILS` | Seed | Comma-separated admin emails for `db:seed` |
+| `ADMIN_SEED_PASSWORD` | Seed | Temporary password for seeded admins |
+| `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | Map | [Mapbox access token](https://account.mapbox.com/) |
+| `NEXT_PUBLIC_MAPBOX_STYLE` | No | Map style URL (default: `streets-v12`) |
+| `NEXT_PUBLIC_SITE_URL` | Production | Canonical site URL |
+| `MAILGUN_*` | Contact form | Mailgun credentials |
+| `CONTACT_TO_EMAIL` | Contact form | Inquiry inbox |
 
-## Mailgun Setup
+## Portal Scripts
 
-1. Create a Mailgun account and add/verify your domain.
-2. Copy your API key and domain into `.env.local`.
-3. Set `MAILGUN_FROM` to an address on your verified domain.
-4. Set `CONTACT_TO_EMAIL` to the inbox where inquiries should arrive.
-5. Submit a test message via the contact form.
+```bash
+npm run db:generate   # Regenerate Prisma client
+npm run db:migrate    # Create/apply dev migrations
+npm run db:deploy     # Apply migrations (production)
+npm run db:seed       # Seed units, settings, admin accounts
+```
+
+Seeded admins must change their password on first login (`/portal/account`).
 
 ## Customizing Content
 
-Edit [`lib/site-config.ts`](lib/site-config.ts) to update:
-
-- Phone, email, office hours
-- Amenities list and descriptions
-- Neighborhood bullets
-- Map coordinates (refine pin location)
-- Gallery image metadata
-
-Replace photos in [`public/images/`](public/images/).
-
-## Scripts
-
-```bash
-npm run dev      # Development server
-npm run build    # Production build
-npm run start    # Start production server
-npm run lint     # ESLint
-```
-
-## Future Booking
-
-When ready to enable online booking:
-
-1. Set `bookingEnabled: true` in `site-config.ts`
-2. Replace `/book` page content with your reservation flow
-3. Wire nav CTAs to the live booking system
-
-Planned integrations: database, payments (Stripe), admin dashboard, calendar sync.
+Edit [`lib/site-config.ts`](lib/site-config.ts) for marketing content. Portal units are seeded from `floorPlans` in that file; manage live units in `/portal/admin/units`.
 
 ## Deployment (jm.kartersanamo.com — Home Server)
 
-This site runs in Docker on port **8004**, routed through the Cloudflare tunnel (`homeserver`).
-
-### Deploy / update
+Docker on port **8004**, routed through Cloudflare tunnel.
 
 ```bash
 cd web
-cp .env.example .env   # Mailgun, Mapbox, etc.
+# Ensure .env has DATABASE_URL (host.docker.internal for Docker → host MySQL)
+npm run db:deploy && npm run db:seed   # first time only
 ./deploy.sh
-sudo systemctl restart cloudflared   # required after first deploy or ingress changes
 ```
 
-`deploy.sh` reads `.env` and passes `NEXT_PUBLIC_*` values into the Docker **build** (they are baked into the client bundle). Runtime secrets (Mailgun) are loaded into the container via `--env-file .env`. `.env` is excluded from the image context via `.dockerignore`.
-
-The tunnel ingress for `jm.kartersanamo.com` → `http://localhost:8004` lives in `/etc/cloudflared/config.yml`.
-
-DNS: `cloudflared tunnel route dns homeserver jm.kartersanamo.com` (already provisioned).
-
-### Alternative: Vercel
-
-1. Push the repo and import the `web` directory as the project root.
-2. Add all environment variables in the Vercel dashboard.
-3. Set `NEXT_PUBLIC_SITE_URL` to your production domain.
+`deploy.sh` adds `--add-host=host.docker.internal:host-gateway` so the container reaches MySQL on the host. Migrations run automatically on container start when `DATABASE_URL` is set.
 
 ## Launch Checklist
 
-- [ ] Update phone and email in `site-config.ts`
-- [ ] Confirm office hours
-- [ ] Add Mapbox token and verify map pin
-- [ ] Configure Mailgun and send test inquiry
-- [ ] Set `NEXT_PUBLIC_SITE_URL` to production URL
-- [ ] Review Terms and Privacy copy with legal counsel if needed
+- [ ] Create MySQL database and user
+- [ ] Set `DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL` in `.env`
+- [ ] Run `npm run db:deploy && npm run db:seed`
+- [ ] Sign in at `/login` with a seeded admin; change password
+- [ ] Create additional admins at `/portal/admin/admins`
+- [ ] Configure Mapbox and Mailgun as needed
