@@ -1,6 +1,7 @@
 "use server";
 
 import { createAuditLog } from "@/lib/audit";
+import { normalizeJsonString } from "@/lib/json";
 import { auth, requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
@@ -444,12 +445,15 @@ export async function upsertUnit(formData: FormData) {
 export async function updatePortalSetting(formData: FormData) {
   const session = await requireRole("ADMIN");
   const key = String(formData.get("key"));
-  const value = String(formData.get("value"));
+  const raw = String(formData.get("value"));
+
+  const parsed = normalizeJsonString(raw);
+  if (!parsed.ok) return { error: parsed.error };
 
   await db.portalSetting.upsert({
     where: { key },
-    create: { key, value },
-    update: { value },
+    create: { key, value: parsed.value },
+    update: { value: parsed.value },
   });
 
   await createAuditLog({
