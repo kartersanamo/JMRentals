@@ -481,7 +481,7 @@ export async function sendMessage(formData: FormData) {
     ) {
       await notifyPortalMessageToStaff(message.id, session.user.id);
     } else {
-      await notifyPortalMessageToUser(message.id, session.user.id);
+      await notifyPortalMessageToUser(message.id);
     }
   });
 

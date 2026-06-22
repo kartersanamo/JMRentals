@@ -241,10 +241,7 @@ export async function notifyPortalMessageToStaff(
   );
 }
 
-export async function notifyPortalMessageToUser(
-  messageId: string,
-  senderId: string
-) {
+export async function notifyPortalMessageToUser(messageId: string) {
   const message = await db.message.findUnique({
     where: { id: messageId },
     include: {
@@ -349,9 +346,10 @@ export async function notifyPaymentReceived(paymentId: string) {
   });
   if (!payment || !payment.paidAt) return;
 
+  const paidAt = payment.paidAt;
   await notifyUserById(payment.residentId, "payment_received", (user) => ({
     subject: `Payment received — $${Number(payment.amount).toLocaleString()}`,
-    text: `Hi ${user.firstName},\n\nWe received your payment for ${payment.description}.\n\nAmount: $${Number(payment.amount).toLocaleString()}\nPaid on: ${payment.paidAt.toLocaleDateString()}\n\nView your payment history:\n${portalLink("/portal/resident/payments")}`,
+    text: `Hi ${user.firstName},\n\nWe received your payment for ${payment.description}.\n\nAmount: $${Number(payment.amount).toLocaleString()}\nPaid on: ${paidAt.toLocaleDateString()}\n\nView your payment history:\n${portalLink("/portal/resident/payments")}`,
   }));
 }
 

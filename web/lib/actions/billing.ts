@@ -1,7 +1,6 @@
 "use server";
 
 import { createAuditLog } from "@/lib/audit";
-import { canAccessDocument } from "@/lib/documents/access";
 import { auth, requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
@@ -320,7 +319,7 @@ export async function generateMonthlyRent(formData: FormData) {
 }
 
 export async function markPaymentPaidManually(formData: FormData) {
-  const session = await requireRole(["ADMIN", "STAFF"]);
+  await requireRole(["ADMIN", "STAFF"]);
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Invalid payment." };
 

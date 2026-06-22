@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     const email = parsed.data.email.toLowerCase();
     const ip = getClientIp(request);
-    if (!checkRateLimit(`resend-verify:${email}`, 3)) {
+    if (!checkRateLimit(`resend-verify:${email}:${ip}`, 3)) {
       return jsonError("Too many resend requests. Please try again later.", 429);
     }
 

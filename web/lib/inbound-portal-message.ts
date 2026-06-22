@@ -56,7 +56,7 @@ export async function createStaffReplyFromEmail(
   });
 
   await dispatchPortalNotification(() =>
-    notifyPortalMessageToUser(message.id, staffUser.id)
+    notifyPortalMessageToUser(message.id)
   );
 
   return { ok: true };

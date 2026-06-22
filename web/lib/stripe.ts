@@ -7,10 +7,7 @@ export function getStripeClient(): Stripe | null {
   if (!secretKey) return null;
 
   if (!stripeClient) {
-    stripeClient = new Stripe(secretKey, {
-      apiVersion: "2025-02-24.acacia",
-      typescript: true,
-    });
+    stripeClient = new Stripe(secretKey);
   }
 
   return stripeClient;
