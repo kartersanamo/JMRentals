@@ -16,6 +16,9 @@ export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
     emailNotifications: true,
     maintenanceRequests: true,
     guestEmailVerification: true,
+    onlineRentPayments: true,
+    leaseSigning: true,
+    documentManagement: true,
   },
   marketing: {
     showHero: true,
@@ -106,6 +109,24 @@ export const FEATURE_DEFINITIONS: Array<{
     key: "maintenanceRequests",
     label: "Maintenance requests",
     description: "Residents can submit maintenance requests",
+    group: "portal",
+  },
+  {
+    key: "onlineRentPayments",
+    label: "Online rent payments",
+    description: "Residents can pay rent with Stripe Checkout",
+    group: "portal",
+  },
+  {
+    key: "leaseSigning",
+    label: "Lease signing",
+    description: "Residents can review and sign leases in the portal",
+    group: "portal",
+  },
+  {
+    key: "documentManagement",
+    label: "Document management",
+    description: "Staff can upload documents and residents can download them",
     group: "portal",
   },
   {

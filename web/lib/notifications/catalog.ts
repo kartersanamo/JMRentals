@@ -9,7 +9,9 @@ export type NotificationKey =
   | "portal_message_to_user"
   | "announcement_posted"
   | "payment_recorded"
+  | "payment_received"
   | "lease_created"
+  | "lease_signed"
   | "website_contact_form";
 
 export type NotificationCategory =
@@ -102,11 +104,27 @@ export const NOTIFICATION_CATALOG: NotificationDefinition[] = [
     defaultEnabled: true,
   },
   {
+    key: "payment_received",
+    category: "announcements",
+    label: "Payment confirmations",
+    description: "When an online or manual payment is marked received",
+    roles: ["RESIDENT"],
+    defaultEnabled: true,
+  },
+  {
     key: "lease_created",
     category: "account",
     label: "Lease & move-in updates",
     description: "When a lease is created or you are promoted to resident",
     roles: ["GUEST", "RESIDENT"],
+    defaultEnabled: true,
+  },
+  {
+    key: "lease_signed",
+    category: "account",
+    label: "Lease signed by resident",
+    description: "When a resident signs their lease in the portal",
+    roles: ["ADMIN", "STAFF"],
     defaultEnabled: true,
   },
 ];

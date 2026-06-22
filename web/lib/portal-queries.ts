@@ -5,8 +5,20 @@ import { redirect } from "next/navigation";
 export async function getActiveLease(residentId: string) {
   return db.lease.findFirst({
     where: { residentId, status: "ACTIVE" },
-    include: { unit: true },
+    include: { unit: true, leaseDocument: true },
     orderBy: { startDate: "desc" },
+  });
+}
+
+export async function getResidentLease(residentId: string) {
+  return db.lease.findFirst({
+    where: { residentId, status: { in: ["PENDING", "ACTIVE"] } },
+    include: {
+      unit: true,
+      leaseDocument: true,
+      documents: { orderBy: { createdAt: "desc" } },
+    },
+    orderBy: { createdAt: "desc" },
   });
 }
 

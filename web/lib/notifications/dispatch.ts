@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getEmploymentDisplayText } from "@/lib/employment";
+import { getPortalReplyAddress } from "@/lib/mailgun";
 import type { NotificationKey } from "@/lib/notifications/catalog";
 import { isNotificationEnabled } from "@/lib/notifications/catalog";
 import {
@@ -8,7 +9,6 @@ import {
   portalLink,
   sendPortalEmail,
 } from "@/lib/notifications/mail";
-import { getPortalReplyAddress } from "@/lib/mailgun";
 import type { UserRole } from "@prisma/client";
 
 type EmailContent = {
@@ -343,6 +343,18 @@ export async function notifyPaymentRecorded(paymentId: string) {
   }));
 }
 
+export async function notifyPaymentReceived(paymentId: string) {
+  const payment = await db.paymentRecord.findUnique({
+    where: { id: paymentId },
+  });
+  if (!payment || !payment.paidAt) return;
+
+  await notifyUserById(payment.residentId, "payment_received", (user) => ({
+    subject: `Payment received — $${Number(payment.amount).toLocaleString()}`,
+    text: `Hi ${user.firstName},\n\nWe received your payment for ${payment.description}.\n\nAmount: $${Number(payment.amount).toLocaleString()}\nPaid on: ${payment.paidAt.toLocaleDateString()}\n\nView your payment history:\n${portalLink("/portal/resident/payments")}`,
+  }));
+}
+
 export async function notifyLeaseCreated(
   residentId: string,
   unitName: string,
@@ -350,8 +362,29 @@ export async function notifyLeaseCreated(
 ) {
   await notifyUserById(residentId, "lease_created", (user) => ({
     subject: `Your lease is ready — ${unitName}`,
-    text: `Hi ${user.firstName},\n\nA lease has been created for ${unitName} at $${monthlyRent.toLocaleString()}/month.\n\nView your lease details:\n${portalLink("/portal/resident/lease")}`,
+    text: `Hi ${user.firstName},\n\nA lease has been created for ${unitName} at $${monthlyRent.toLocaleString()}/month.\n\nReview and sign your lease in the portal:\n${portalLink("/portal/resident/lease")}`,
   }));
+}
+
+export async function notifyLeaseSigned(leaseId: string) {
+  const lease = await db.lease.findUnique({
+    where: { id: leaseId },
+    include: {
+      resident: { select: { firstName: true, lastName: true } },
+      unit: { select: { name: true } },
+    },
+  });
+  if (!lease) return;
+
+  await notifyUsers(
+    "lease_signed",
+    ["ADMIN", "STAFF"],
+    () => ({
+      subject: `Lease signed — ${lease.resident.firstName} ${lease.resident.lastName}`,
+      text: `${lease.resident.firstName} ${lease.resident.lastName} signed the lease for ${lease.unit.name}.\n\nSigned by: ${lease.signedByName ?? "Resident"}\nSigned on: ${lease.signedAt?.toLocaleString() ?? "Unknown"}\n\nManage leases:\n${portalLink("/portal/admin/leases")}`,
+    }),
+    [lease.residentId]
+  );
 }
 
 export async function dispatchPortalNotification(

@@ -52,6 +52,14 @@ enum MaintenanceStatus {
   CLOSED
 }
 
+enum DocumentCategory {
+  LEASE
+  ADDENDUM
+  RULES
+  RECEIPT
+  OTHER
+}
+
 model User {
   id           String     @id @default(cuid())
   email        String     @unique
@@ -85,6 +93,7 @@ model User {
   messageThreads   MessageThread[]      @relation("ThreadParticipant")
   sentMessages     Message[]
   auditLogs        AuditLog[]           @relation("AuditActor")
+  uploadedDocuments Document[]          @relation("UploadedDocuments")
 
   @@index([role])
   @@index([status])
@@ -144,19 +153,26 @@ model Unit {
 }
 
 model Lease {
-  id          String      @id @default(cuid())
-  residentId  String
-  unitId      String
-  startDate   DateTime
-  endDate     DateTime?
-  monthlyRent Decimal     @db.Decimal(10, 2)
-  status      LeaseStatus @default(PENDING)
-  houseRules  String?     @db.Text
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id               String      @id @default(cuid())
+  residentId       String
+  unitId           String
+  startDate        DateTime
+  endDate          DateTime?
+  monthlyRent      Decimal     @db.Decimal(10, 2)
+  status           LeaseStatus @default(PENDING)
+  houseRules       String?     @db.Text
+  signedAt         DateTime?
+  signedByName     String?
+  signedIp         String?
+  leaseDocumentId  String?     @unique
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
-  resident User @relation("ResidentLeases", fields: [residentId], references: [id], onDelete: Cascade)
-  unit     Unit @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  resident      User            @relation("ResidentLeases", fields: [residentId], references: [id], onDelete: Cascade)
+  unit          Unit            @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  leaseDocument Document?       @relation("LeasePrimaryDocument", fields: [leaseDocumentId], references: [id], onDelete: SetNull)
+  documents     Document[]      @relation("LeaseDocuments")
+  paymentRecords PaymentRecord[]
 
   @@index([residentId])
   @@index([unitId])
@@ -202,32 +218,51 @@ model MaintenanceRequest {
 }
 
 model PaymentRecord {
-  id              String    @id @default(cuid())
-  residentId      String
-  amount          Decimal   @db.Decimal(10, 2)
-  dueDate         DateTime
-  paidAt          DateTime?
-  description     String
-  stripePaymentId String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                      String    @id @default(cuid())
+  residentId              String
+  leaseId                 String?
+  amount                  Decimal   @db.Decimal(10, 2)
+  dueDate                 DateTime
+  paidAt                  DateTime?
+  description             String
+  stripePaymentId         String?
+  stripeCheckoutSessionId String?   @unique
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
-  resident User @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  resident User   @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  lease    Lease? @relation(fields: [leaseId], references: [id], onDelete: SetNull)
 
   @@index([residentId])
+  @@index([leaseId])
 }
 
 model Document {
-  id         String   @id @default(cuid())
-  title      String
-  filePath   String
-  residentId String?
-  unitId     String?
-  isGlobal   Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id           String           @id @default(cuid())
+  title        String
+  filePath     String
+  fileName     String           @default("document")
+  mimeType     String           @default("application/octet-stream")
+  fileSize     Int              @default(0)
+  category     DocumentCategory @default(OTHER)
+  residentId   String?
+  unitId       String?
+  leaseId      String?
+  uploadedById String?
+  isGlobal     Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
-  resident User? @relation(fields: [residentId], references: [id], onDelete: Cascade)
-  unit     Unit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  resident      User?  @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  unit          Unit?  @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  lease         Lease? @relation("LeaseDocuments", fields: [leaseId], references: [id], onDelete: SetNull)
+  uploadedBy    User?  @relation("UploadedDocuments", fields: [uploadedById], references: [id], onDelete: SetNull)
+  primaryLease  Lease? @relation("LeasePrimaryDocument")
+
+  @@index([residentId])
+  @@index([unitId])
+  @@index([leaseId])
+  @@index([uploadedById])
 }
 
 model Announcement {

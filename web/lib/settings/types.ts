@@ -10,7 +10,10 @@ export type FeatureKey =
   | "portalMessages"
   | "emailNotifications"
   | "maintenanceRequests"
-  | "guestEmailVerification";
+  | "guestEmailVerification"
+  | "onlineRentPayments"
+  | "leaseSigning"
+  | "documentManagement";
 
 export type MarketingKey =
   | "showHero"
@@ -33,6 +36,9 @@ export interface SystemFeatures {
   emailNotifications: boolean;
   maintenanceRequests: boolean;
   guestEmailVerification: boolean;
+  onlineRentPayments: boolean;
+  leaseSigning: boolean;
+  documentManagement: boolean;
 }
 
 export interface MarketingSections {

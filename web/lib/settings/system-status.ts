@@ -81,6 +81,33 @@ export async function getSystemStatusChecks(): Promise<SystemStatusCheck[]> {
     detail: siteUrl ?? "Set AUTH_URL or NEXT_PUBLIC_SITE_URL for email links",
   });
 
+  const stripeSecret = process.env.STRIPE_SECRET_KEY?.trim();
+  const stripeWebhook = process.env.STRIPE_WEBHOOK_SECRET?.trim();
+  const stripePublishable = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
+  if (stripeSecret && stripeWebhook && stripePublishable) {
+    checks.push({
+      id: "stripe",
+      label: "Stripe payments",
+      status: "ok",
+      detail: "Stripe keys configured for online rent payments",
+    });
+  } else {
+    const missing = [
+      !stripeSecret && "STRIPE_SECRET_KEY",
+      !stripeWebhook && "STRIPE_WEBHOOK_SECRET",
+      !stripePublishable && "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+    ].filter(Boolean);
+    checks.push({
+      id: "stripe",
+      label: "Stripe payments",
+      status: "warn",
+      detail:
+        missing.length > 0
+          ? `Missing: ${missing.join(", ")}`
+          : "Stripe not fully configured",
+    });
+  }
+
   return checks;
 }
 

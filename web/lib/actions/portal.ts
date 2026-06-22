@@ -13,6 +13,7 @@ import {
   notifyMaintenanceStatusChanged,
   notifyMaintenanceSubmitted,
   notifyPaymentRecorded,
+  notifyPaymentReceived,
   notifyPortalMessageToStaff,
   notifyPortalMessageToUser,
 } from "@/lib/notifications/dispatch";
@@ -128,7 +129,7 @@ export async function createLease(formData: FormData) {
         endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null,
         monthlyRent: parsed.data.monthlyRent,
         houseRules: parsed.data.houseRules,
-        status: "ACTIVE",
+        status: "PENDING",
       },
     });
     await tx.unit.update({
@@ -499,16 +500,31 @@ export async function createPaymentRecord(formData: FormData) {
   });
   if (!parsed.success) return { error: "Invalid payment data." };
 
+  const activeLease = await db.lease.findFirst({
+    where: {
+      residentId: parsed.data.residentId,
+      status: { in: ["PENDING", "ACTIVE"] },
+    },
+    select: { id: true },
+    orderBy: { createdAt: "desc" },
+  });
+
   const payment = await db.paymentRecord.create({
     data: {
       residentId: parsed.data.residentId,
+      leaseId: activeLease?.id,
       amount: parsed.data.amount,
       dueDate: new Date(parsed.data.dueDate),
       paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
       description: parsed.data.description,
     },
   });
-  await dispatchPortalNotification(() => notifyPaymentRecorded(payment.id));
+  await dispatchPortalNotification(async () => {
+    await notifyPaymentRecorded(payment.id);
+    if (payment.paidAt) {
+      await notifyPaymentReceived(payment.id);
+    }
+  });
   revalidatePortal();
   return { success: true };
 }
