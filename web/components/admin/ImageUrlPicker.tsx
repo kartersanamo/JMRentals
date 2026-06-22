@@ -6,7 +6,7 @@ import {
   getInitialImagePickerState,
   resolveImagePickerValue,
 } from "@/lib/gallery-options";
-import type { SiteGalleryImage } from "@/lib/settings/types";
+import type { SiteGalleryCategory, SiteGalleryImage } from "@/lib/settings/types";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
@@ -19,6 +19,7 @@ type ImageUrlPickerProps = {
   name?: string;
   inputId?: string;
   galleryImages: SiteGalleryImage[];
+  galleryCategories?: SiteGalleryCategory[];
   defaultValue?: string;
   value?: string;
   onChange?: (value: string) => void;
@@ -33,6 +34,7 @@ export function ImageUrlPicker({
   name,
   inputId,
   galleryImages,
+  galleryCategories = [],
   defaultValue = "",
   value,
   onChange,
@@ -108,7 +110,7 @@ export function ImageUrlPicker({
         </option>
         {galleryImages.map((image) => (
           <option key={image.src} value={image.src}>
-            {formatGalleryOptionLabel(image)}
+            {formatGalleryOptionLabel(image, galleryCategories)}
           </option>
         ))}
         <option value={CUSTOM_GALLERY_VALUE}>Custom URL…</option>

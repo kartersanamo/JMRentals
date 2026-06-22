@@ -306,7 +306,10 @@ export function AdminCommandCenter({
             <p className="text-sm text-navy/60 mb-6">
               Manage photos for the public gallery and preset image pickers across the admin site.
             </p>
-            <GalleryManager initialGallery={siteContent.gallery} />
+            <GalleryManager
+              initialGallery={siteContent.gallery}
+              initialCategories={siteContent.galleryCategories}
+            />
           </section>
 
           <section className="bg-white border border-navy/10 p-6">

@@ -28,7 +28,7 @@ export default async function GalleryPage() {
       />
       <section className="section-padding bg-cream">
         <div className="mx-auto max-w-7xl">
-          <GalleryGrid images={siteContent.gallery} />
+          <GalleryGrid images={siteContent.gallery} categories={siteContent.galleryCategories} />
         </div>
       </section>
     </>

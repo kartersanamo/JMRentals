@@ -39,7 +39,10 @@ export default async function HomePage() {
         <AmenitiesPreview />
       )}
       {config.marketing.showGalleryPreview && config.features.publicGallery && (
-        <GalleryPreview images={siteContent.gallery} />
+        <GalleryPreview
+          images={siteContent.gallery}
+          categories={siteContent.galleryCategories}
+        />
       )}
       {config.marketing.showNeighborhood && (
         <Neighborhood items={siteContent.neighborhood} />

@@ -2,20 +2,23 @@
 
 import { AnimateIn } from "@/components/ui/AnimateIn";
 import { Lightbox } from "@/components/gallery/Lightbox";
-import type { GalleryCategory, GalleryImage } from "@/lib/site-config";
+import type { GalleryImage } from "@/lib/site-config";
+import type { SiteGalleryCategory } from "@/lib/settings/types";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
-type Filter = "all" | GalleryCategory;
+type Filter = "all" | string;
 
 interface GalleryGridProps {
   images: GalleryImage[];
+  categories?: SiteGalleryCategory[];
   preview?: boolean;
   previewCount?: number;
 }
 
 export function GalleryGrid({
   images,
+  categories = [],
   preview = false,
   previewCount = 6,
 }: GalleryGridProps) {
@@ -30,15 +33,29 @@ export function GalleryGrid({
     return preview ? list.slice(0, previewCount) : list;
   }, [images, filter, preview, previewCount]);
 
-  const filters: { value: Filter; label: string }[] = [
-    { value: "all", label: "All" },
-    { value: "inside", label: "Inside" },
-    { value: "outside", label: "Outside" },
-  ];
+  const filters = useMemo(() => {
+    const dynamic = categories.map((category) => ({
+      value: category.id,
+      label: category.label,
+    }));
+
+    if (dynamic.length > 0) {
+      return [{ value: "all" as const, label: "All" }, ...dynamic];
+    }
+
+    const uniqueIds = Array.from(new Set(images.map((image) => image.category)));
+    return [
+      { value: "all" as const, label: "All" },
+      ...uniqueIds.map((id) => ({
+        value: id,
+        label: id.charAt(0).toUpperCase() + id.slice(1),
+      })),
+    ];
+  }, [categories, images]);
 
   return (
     <>
-      {!preview && (
+      {!preview && filters.length > 1 && (
         <div className="flex flex-wrap justify-center gap-3 mb-12">
           {filters.map((f) => (
             <button
@@ -65,7 +82,7 @@ export function GalleryGrid({
         }`}
       >
         {filtered.map((image, i) => (
-          <AnimateIn key={image.src} delay={preview ? i * 0.05 : i * 0.04}>
+          <AnimateIn key={`${image.src}-${i}`} delay={preview ? i * 0.05 : i * 0.04}>
             <button
               type="button"
               onClick={() => {

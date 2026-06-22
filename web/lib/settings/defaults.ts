@@ -1,4 +1,5 @@
 import { site } from "@/lib/site-config";
+import { DEFAULT_GALLERY_CATEGORIES } from "@/lib/gallery-categories";
 import type { SiteContent, SystemConfig } from "./types";
 
 export const SYSTEM_CONFIG_KEY = "system_config";
@@ -47,6 +48,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   social: { ...site.social },
   hours: site.hours.map((row) => ({ ...row })),
   neighborhood: [...site.neighborhood],
+  galleryCategories: DEFAULT_GALLERY_CATEGORIES.map((item) => ({ ...item })),
   gallery: site.gallery.map((image) => ({ ...image })),
   floorPlans: site.floorPlans.map((plan) => ({ ...plan })),
 };

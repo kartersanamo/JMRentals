@@ -13,6 +13,7 @@ import {
   saveSiteContent,
   saveSystemConfig,
 } from "@/lib/settings/store";
+import { normalizeGalleryContent } from "@/lib/gallery-categories";
 import type { SiteContent, SystemConfig } from "@/lib/settings/types";
 import { revalidatePath } from "next/cache";
 
@@ -174,38 +175,38 @@ export async function updatePortalSettingJson(formData: FormData) {
 export async function updateSiteGallery(formData: FormData) {
   const session = await requireRole("ADMIN");
   const current = await getSiteContent();
-  const raw = String(formData.get("galleryJson") ?? "");
+  const rawGallery = String(formData.get("galleryJson") ?? "");
+  const rawCategories = String(formData.get("galleryCategoriesJson") ?? "");
 
-  let parsedGallery: SiteContent["gallery"];
+  let parsedGallery: unknown;
+  let parsedCategories: unknown;
   try {
-    parsedGallery = JSON.parse(raw);
+    parsedGallery = JSON.parse(rawGallery);
+    parsedCategories = JSON.parse(rawCategories);
   } catch {
     return { error: "Invalid gallery data." };
   }
 
-  if (!Array.isArray(parsedGallery)) {
-    return { error: "Gallery must be a list of photos." };
-  }
+  const { gallery, galleryCategories } = normalizeGalleryContent({
+    gallery: parsedGallery,
+    galleryCategories: parsedCategories,
+  });
 
-  const gallery = parsedGallery
-    .map((item) => ({
-      src: String(item?.src ?? "").trim(),
-      category: item?.category === "outside" ? "outside" : "inside",
-      alt: String(item?.alt ?? "").trim(),
-    }))
-    .filter((item) => item.src && item.alt) as SiteContent["gallery"];
+  if (galleryCategories.length === 0) {
+    return { error: "Add at least one gallery category." };
+  }
 
   if (gallery.length === 0) {
     return { error: "Add at least one gallery photo with a URL and alt text." };
   }
 
-  await saveSiteContent({ ...current, gallery });
+  await saveSiteContent({ ...current, gallery, galleryCategories });
 
   await createAuditLog({
     actorId: session.user.id,
     action: "SITE_GALLERY_UPDATED",
     targetType: "PortalSetting",
-    details: `${gallery.length} photo(s)`,
+    details: `${gallery.length} photo(s), ${galleryCategories.length} categor${galleryCategories.length === 1 ? "y" : "ies"}`,
   });
 
   revalidateAll();

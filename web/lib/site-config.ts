@@ -17,7 +17,7 @@ import {
   Waves,
 } from "lucide-react";
 
-export type GalleryCategory = "inside" | "outside";
+export type GalleryCategory = string;
 
 export interface GalleryImage {
   src: string;

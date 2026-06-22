@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { normalizeGalleryContent } from "@/lib/gallery-categories";
 import { site } from "@/lib/site-config";
 import { cache } from "react";
 import {
@@ -21,7 +22,7 @@ function deepMergeSystemConfig(partial: Partial<SystemConfig>): SystemConfig {
 }
 
 function deepMergeSiteContent(partial: Partial<SiteContent>): SiteContent {
-  return {
+  const merged = {
     ...DEFAULT_SITE_CONTENT,
     ...partial,
     address: { ...DEFAULT_SITE_CONTENT.address, ...partial.address },
@@ -30,7 +31,20 @@ function deepMergeSiteContent(partial: Partial<SiteContent>): SiteContent {
     hours: partial.hours ?? DEFAULT_SITE_CONTENT.hours,
     neighborhood: partial.neighborhood ?? DEFAULT_SITE_CONTENT.neighborhood,
     gallery: partial.gallery ?? DEFAULT_SITE_CONTENT.gallery,
+    galleryCategories:
+      partial.galleryCategories ?? DEFAULT_SITE_CONTENT.galleryCategories,
     floorPlans: partial.floorPlans ?? DEFAULT_SITE_CONTENT.floorPlans,
+  };
+
+  const normalized = normalizeGalleryContent({
+    gallery: merged.gallery,
+    galleryCategories: merged.galleryCategories,
+  });
+
+  return {
+    ...merged,
+    galleryCategories: normalized.galleryCategories,
+    gallery: normalized.gallery,
   };
 }
 

@@ -1,3 +1,4 @@
+import { getGalleryCategoryLabel } from "@/lib/gallery-categories";
 import type { SiteGalleryImage } from "@/lib/settings/types";
 
 export const CUSTOM_GALLERY_VALUE = "__custom__";
@@ -45,8 +46,10 @@ export function getInitialImagePickerState(
   };
 }
 
-export function formatGalleryOptionLabel(image: SiteGalleryImage): string {
-  const category =
-    image.category === "inside" ? "Inside" : "Outside";
+export function formatGalleryOptionLabel(
+  image: SiteGalleryImage,
+  categories: Parameters<typeof getGalleryCategoryLabel>[1] = []
+): string {
+  const category = getGalleryCategoryLabel(image.category, categories);
   return `${image.alt} (${category})`;
 }

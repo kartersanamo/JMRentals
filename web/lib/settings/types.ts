@@ -76,6 +76,11 @@ export interface SiteOfficeHour {
   closed?: boolean;
 }
 
+export interface SiteGalleryCategory {
+  id: string;
+  label: string;
+}
+
 export interface SiteGalleryImage {
   src: string;
   category: GalleryCategory;
@@ -105,6 +110,7 @@ export interface SiteContent {
   social: { facebook: string };
   hours: SiteOfficeHour[];
   neighborhood: string[];
+  galleryCategories: SiteGalleryCategory[];
   gallery: SiteGalleryImage[];
   floorPlans: SiteFloorPlan[];
 }
