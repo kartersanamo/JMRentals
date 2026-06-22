@@ -9,6 +9,10 @@ import {
 } from "./defaults";
 import type { SiteContent, SystemConfig } from "./types";
 
+function canUseDatabase(): boolean {
+  return Boolean(process.env.DATABASE_URL?.trim());
+}
+
 function deepMergeSystemConfig(partial: Partial<SystemConfig>): SystemConfig {
   return {
     features: { ...DEFAULT_SYSTEM_CONFIG.features, ...partial.features },
@@ -31,9 +35,11 @@ function deepMergeSiteContent(partial: Partial<SiteContent>): SiteContent {
 }
 
 async function readJsonSetting<T>(key: string): Promise<Partial<T> | null> {
-  const row = await db.portalSetting.findUnique({ where: { key } });
-  if (!row?.value) return null;
+  if (!canUseDatabase()) return null;
+
   try {
+    const row = await db.portalSetting.findUnique({ where: { key } });
+    if (!row?.value) return null;
     return JSON.parse(row.value) as Partial<T>;
   } catch {
     return null;
@@ -79,6 +85,10 @@ export async function isMarketingEnabled(
 }
 
 export async function saveSystemConfig(config: SystemConfig): Promise<void> {
+  if (!canUseDatabase()) {
+    throw new Error("DATABASE_URL is not configured");
+  }
+
   await db.portalSetting.upsert({
     where: { key: SYSTEM_CONFIG_KEY },
     create: {
@@ -94,6 +104,10 @@ export function getDirectionsUrlFromContent(content: SiteContent): string {
 }
 
 export async function saveSiteContent(content: SiteContent): Promise<void> {
+  if (!canUseDatabase()) {
+    throw new Error("DATABASE_URL is not configured");
+  }
+
   await db.portalSetting.upsert({
     where: { key: SITE_CONTENT_KEY },
     create: {

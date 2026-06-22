@@ -2,6 +2,8 @@ import { RegisterForm } from "@/components/auth/RegisterForm";
 import { isFeatureEnabled } from "@/lib/settings/store";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function RegisterPage() {
   const enabled = await isFeatureEnabled("guestRegistration");
 

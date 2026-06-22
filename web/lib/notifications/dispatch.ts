@@ -8,6 +8,7 @@ import {
   portalLink,
   sendPortalEmail,
 } from "@/lib/notifications/mail";
+import { getPortalReplyAddress } from "@/lib/mailgun";
 import type { UserRole } from "@prisma/client";
 
 type EmailContent = {
@@ -50,7 +51,8 @@ async function notifyUsers(
     firstName: string;
     lastName: string;
   }) => EmailContent,
-  excludeUserIds: string[] = []
+  excludeUserIds: string[] = [],
+  options?: { replyTo?: string }
 ) {
   const subscribers = await getSubscribers(key, roles, excludeUserIds);
   if (subscribers.length === 0) return;
@@ -63,6 +65,7 @@ async function notifyUsers(
         subject: content.subject,
         text: content.text + portalEmailFooter(),
         html: (content.html ?? content.text.replace(/\n/g, "<br>")) + portalEmailHtmlFooter(),
+        replyTo: options?.replyTo,
       });
     })
   );
@@ -212,7 +215,7 @@ export async function notifyPortalMessageToStaff(
     where: { id: messageId },
     include: {
       sender: { select: { firstName: true, lastName: true, role: true } },
-      thread: { select: { subject: true } },
+      thread: { select: { id: true, subject: true } },
     },
   });
   if (!message) return;
@@ -220,14 +223,21 @@ export async function notifyPortalMessageToStaff(
     return;
   }
 
+  const replyTo = getPortalReplyAddress(message.thread.id);
+  const replyHint = replyTo
+    ? `\n\nReply to this email to respond in the portal.`
+    : "";
+
   await notifyUsers(
     "portal_message_to_staff",
     ["ADMIN", "STAFF"],
     () => ({
       subject: `New portal message — ${message.thread.subject}`,
-      text: `${message.sender.firstName} ${message.sender.lastName} (${message.sender.role}) sent a message:\n\nSubject: ${message.thread.subject}\n\n${message.body}`,
+      text: `${message.sender.firstName} ${message.sender.lastName} (${message.sender.role}) sent a message:\n\nSubject: ${message.thread.subject}\n\n${message.body}${replyHint}`,
+      html: `<p><strong>${message.sender.firstName} ${message.sender.lastName}</strong> (${message.sender.role}) sent a message:</p><p><strong>Subject:</strong> ${message.thread.subject}</p><p style="white-space:pre-wrap;">${message.body}</p>${replyTo ? `<p><em>Reply to this email to respond in the portal.</em></p>` : ""}`,
     }),
-    [senderId]
+    [senderId],
+    { replyTo: replyTo ?? undefined }
   );
 }
 

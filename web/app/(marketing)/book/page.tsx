@@ -6,6 +6,8 @@ import { Calendar, CreditCard, Home } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Book Online",
   description:

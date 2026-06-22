@@ -11,6 +11,8 @@ import {
   getSystemConfig,
 } from "@/lib/settings/store";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [config, siteContent, runtimeSite] = await Promise.all([
     getSystemConfig(),

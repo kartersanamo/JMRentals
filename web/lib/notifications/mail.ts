@@ -5,6 +5,7 @@ export interface PortalEmailPayload {
   subject: string;
   text: string;
   html?: string;
+  replyTo?: string;
 }
 
 export async function sendPortalEmail(
@@ -26,6 +27,7 @@ export async function sendPortalEmail(
     subject: payload.subject,
     text: payload.text,
     html: payload.html ?? payload.text.replace(/\n/g, "<br>"),
+    ...(payload.replyTo ? { "h:Reply-To": payload.replyTo } : {}),
   });
 }
 
