@@ -1,9 +1,10 @@
 import { ComingSoonBanner } from "@/components/ui/ComingSoonBanner";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHero } from "@/components/layout/PageHero";
-import { site } from "@/lib/site-config";
+import { getSiteContent, isFeatureEnabled } from "@/lib/settings/store";
 import { Calendar, CreditCard, Home } from "lucide-react";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Book Online",
@@ -29,7 +30,13 @@ const features = [
   },
 ];
 
-export default function BookPage() {
+export default async function BookPage() {
+  if (!(await isFeatureEnabled("onlineBookingPage"))) {
+    redirect("/");
+  }
+
+  const siteContent = await getSiteContent();
+
   return (
     <>
       <PageHero
@@ -75,12 +82,12 @@ export default function BookPage() {
 
           <p className="mt-10 text-sm text-navy/50">
             Questions? Email{" "}
-            <a href={`mailto:${site.email}`} className="text-gold hover:underline">
-              {site.email}
+            <a href={`mailto:${siteContent.email}`} className="text-gold hover:underline">
+              {siteContent.email}
             </a>{" "}
             or call{" "}
-            <a href={`tel:${site.phone.replace(/\D/g, "")}`} className="text-gold hover:underline">
-              {site.phone}
+            <a href={`tel:${siteContent.phone.replace(/\D/g, "")}`} className="text-gold hover:underline">
+              {siteContent.phone}
             </a>
             .
           </p>

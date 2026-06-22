@@ -3,7 +3,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { site } from "@/lib/site-config";
 import { Check } from "lucide-react";
 
-export function Neighborhood() {
+export function Neighborhood({ items = site.neighborhood }: { items?: string[] }) {
   return (
     <section className="section-padding bg-navy text-cream">
       <div className="mx-auto max-w-7xl">
@@ -14,7 +14,7 @@ export function Neighborhood() {
           light
         />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
-          {site.neighborhood.map((item, i) => (
+          {items.map((item, i) => (
             <AnimateIn key={item} delay={i * 0.04}>
               <div className="flex items-start gap-3 p-4 border border-cream/10 hover:border-gold/40 transition-colors">
                 <Check className="h-5 w-5 text-gold shrink-0 mt-0.5" aria-hidden />

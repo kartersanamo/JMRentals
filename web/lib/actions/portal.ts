@@ -20,6 +20,7 @@ import {
   getNotificationsForRole,
   type NotificationPreferences,
 } from "@/lib/notifications/catalog";
+import { isFeatureEnabled } from "@/lib/settings/store";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import {
   announcementSchema,
@@ -44,6 +45,9 @@ function revalidatePortal() {
 
 export async function submitApplication(formData: FormData) {
   const session = await requireRole("GUEST");
+  if (!(await isFeatureEnabled("portalGuestApply"))) {
+    return { error: "Rental applications are currently disabled." };
+  }
 
   let employmentDetails: unknown;
   try {
@@ -372,6 +376,9 @@ export async function changePassword(formData: FormData) {
 
 export async function submitMaintenance(formData: FormData) {
   const session = await requireRole("RESIDENT");
+  if (!(await isFeatureEnabled("maintenanceRequests"))) {
+    return { error: "Maintenance requests are currently disabled." };
+  }
   const parsed = maintenanceSchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description"),
@@ -436,6 +443,9 @@ export async function createAnnouncement(formData: FormData) {
 export async function sendMessage(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { error: "Unauthorized." };
+  if (!(await isFeatureEnabled("portalMessages"))) {
+    return { error: "Portal messaging is currently disabled." };
+  }
 
   const parsed = messageSchema.safeParse({
     subject: formData.get("subject") || undefined,

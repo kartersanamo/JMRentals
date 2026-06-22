@@ -1,11 +1,19 @@
+import { isFeatureEnabled } from "@/lib/settings/store";
+import { NextRequest, NextResponse } from "next/server";
 import { sendContactFormEmail } from "@/lib/contact-mail";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { contactSchema } from "@/lib/validators/contact";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
+    if (!(await isFeatureEnabled("contactForm"))) {
+      return NextResponse.json(
+        { error: "The contact form is currently unavailable." },
+        { status: 503 }
+      );
+    }
+
     const body = await request.json();
     const parsed = contactSchema.safeParse(body);
 

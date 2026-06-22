@@ -348,6 +348,12 @@ export async function dispatchPortalNotification(
   task: () => Promise<void>
 ) {
   try {
+    const { isFeatureEnabled: featureEnabled } = await import(
+      "@/lib/settings/store"
+    );
+    if (!(await featureEnabled("emailNotifications"))) {
+      return;
+    }
     await task();
   } catch (error) {
     console.error("Portal notification error:", error);

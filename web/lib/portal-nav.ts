@@ -39,7 +39,7 @@ export function getPortalNav(role: UserRole): PortalNavItem[] {
         { href: "/portal/staff/maintenance", label: "Maintenance", icon: "wrench" },
         { href: "/portal/staff/announcements", label: "Announcements", icon: "megaphone" },
         { href: "/portal/admin/audit", label: "Audit Log", icon: "scroll" },
-        { href: "/portal/admin/settings", label: "Settings", icon: "settings" },
+        { href: "/portal/admin/settings", label: "System Control", icon: "settings" },
         { href: "/portal/notifications", label: "Notifications", icon: "bell" },
         { href: "/portal/account", label: "My Account", icon: "user" },
       ];

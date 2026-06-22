@@ -1,6 +1,5 @@
 "use client";
 
-import { getDirectionsUrl } from "@/lib/site-config";
 import { MapPin } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -17,8 +16,9 @@ const MapSectionMap = dynamic(
   }
 );
 
-export function MapSection() {
+export function MapSection({ directionsUrl }: { directionsUrl?: string }) {
   const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+  const directions = directionsUrl ?? "https://www.google.com/maps";
 
   if (!token) {
     return (
@@ -30,7 +30,7 @@ export function MapSection() {
           your environment to enable the interactive map.
         </p>
         <Link
-          href={getDirectionsUrl()}
+          href={directions}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm uppercase tracking-widest text-gold hover:text-navy transition-colors"

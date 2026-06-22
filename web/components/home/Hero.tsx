@@ -5,11 +5,19 @@ import { site } from "@/lib/site-config";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
-export function Hero() {
+export function Hero({
+  name = site.name,
+  tagline = site.tagline,
+  heroImage = site.heroImage,
+}: {
+  name?: string;
+  tagline?: string;
+  heroImage?: string;
+}) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <Image
-        src={site.heroImage}
+        src={heroImage}
         alt="J&M Rentals property exterior in Larose, Louisiana"
         fill
         priority
@@ -33,7 +41,7 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.35 }}
           className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-cream leading-[1.05] text-balance"
         >
-          {site.name}
+          {name}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -41,7 +49,7 @@ export function Hero() {
           transition={{ duration: 0.7, delay: 0.5 }}
           className="mt-6 text-lg md:text-xl text-sand/95 max-w-2xl mx-auto leading-relaxed"
         >
-          {site.tagline}. Experience renovated comfort and bayou-country charm
+          {tagline}. Experience renovated comfort and bayou-country charm
           in Larose, LA.
         </motion.p>
         <motion.div

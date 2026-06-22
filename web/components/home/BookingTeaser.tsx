@@ -3,10 +3,15 @@ import { ButtonLink } from "@/components/ui/Button";
 import { ComingSoonBanner } from "@/components/ui/ComingSoonBanner";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { UnitBrowseCard } from "@/components/units/UnitBrowseCard";
+import type { SiteFloorPlan } from "@/lib/settings/types";
 import { site } from "@/lib/site-config";
 import { Bed, Calendar, Search } from "lucide-react";
 
-export function BookingTeaser() {
+export function BookingTeaser({
+  floorPlans = site.floorPlans,
+}: {
+  floorPlans?: SiteFloorPlan[];
+}) {
   return (
     <section id="availability" className="section-padding bg-sand/40">
       <div className="mx-auto max-w-7xl">
@@ -34,7 +39,7 @@ export function BookingTeaser() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {site.floorPlans.map((plan, i) => (
+          {floorPlans.map((plan, i) => (
             <AnimateIn key={plan.name} delay={i * 0.1}>
               <UnitBrowseCard
                 name={plan.name}

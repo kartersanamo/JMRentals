@@ -5,11 +5,11 @@ import {
   getVerificationExpiry,
   hashVerificationCode,
   sendGuestVerificationEmail,
-  verifyVerificationCode,
 } from "@/lib/email-verification";
 import { hashPassword } from "@/lib/password";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { isFeatureEnabled } from "@/lib/settings/store";
 import { registerSchema } from "@/lib/validators/portal";
 import { NextRequest } from "next/server";
 
@@ -32,6 +32,10 @@ async function issueVerificationCode(
 
 export async function POST(request: NextRequest) {
   try {
+    if (!(await isFeatureEnabled("guestRegistration"))) {
+      return jsonError("Guest registration is currently disabled.", 503);
+    }
+
     const body = await request.json();
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {
@@ -84,6 +88,20 @@ export async function POST(request: NextRequest) {
       });
       userId = user.id;
       firstName = parsed.data.firstName;
+    }
+
+    const requireVerification = await isFeatureEnabled("guestEmailVerification");
+
+    if (!requireVerification) {
+      await db.user.update({
+        where: { id: userId },
+        data: {
+          emailVerifiedAt: new Date(),
+          emailVerifyCodeHash: null,
+          emailVerifyExpires: null,
+        },
+      });
+      return jsonOk({ email, needsVerification: false, verified: true }, 201);
     }
 
     try {

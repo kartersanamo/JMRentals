@@ -1,7 +1,8 @@
 import { GalleryGrid } from "@/components/gallery/GalleryGrid";
 import { PageHero } from "@/components/layout/PageHero";
-import { site } from "@/lib/site-config";
+import { getSiteContent, isFeatureEnabled } from "@/lib/settings/store";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Photo Gallery",
@@ -9,7 +10,13 @@ export const metadata: Metadata = {
     "View interior and exterior photos of J&M Rentals properties in Larose, Louisiana.",
 };
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  if (!(await isFeatureEnabled("publicGallery"))) {
+    redirect("/");
+  }
+
+  const siteContent = await getSiteContent();
+
   return (
     <>
       <PageHero
@@ -19,7 +26,7 @@ export default function GalleryPage() {
       />
       <section className="section-padding bg-cream">
         <div className="mx-auto max-w-7xl">
-          <GalleryGrid images={site.gallery} />
+          <GalleryGrid images={siteContent.gallery} />
         </div>
       </section>
     </>

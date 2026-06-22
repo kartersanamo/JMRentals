@@ -1,7 +1,8 @@
 import { AmenityGrid } from "@/components/amenities/AmenityGrid";
 import { PageHero } from "@/components/layout/PageHero";
-import { site } from "@/lib/site-config";
+import { getRuntimeSite, isFeatureEnabled } from "@/lib/settings/store";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Amenities",
@@ -9,7 +10,13 @@ export const metadata: Metadata = {
     "Explore the full list of amenities at J&M Rentals in Larose, LA — modern finishes, climate control, parking, and more.",
 };
 
-export default function AmenitiesPage() {
+export default async function AmenitiesPage() {
+  if (!(await isFeatureEnabled("publicAmenitiesPage"))) {
+    redirect("/");
+  }
+
+  const runtimeSite = await getRuntimeSite();
+
   return (
     <>
       <PageHero
@@ -23,7 +30,7 @@ export default function AmenitiesPage() {
             From renovated interiors to thoughtful community perks, discover
             everything that makes our Larose properties feel like home.
           </p>
-          <AmenityGrid amenities={site.amenities} />
+          <AmenityGrid amenities={runtimeSite.amenities} />
         </div>
       </section>
     </>

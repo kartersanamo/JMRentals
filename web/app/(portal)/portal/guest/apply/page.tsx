@@ -1,6 +1,8 @@
 import { ApplicationForm } from "@/components/portal/ApplicationForm";
 import { PortalCard, PortalPageHeader } from "@/components/portal/PortalCard";
 import { db } from "@/lib/db";
+import { isFeatureEnabled } from "@/lib/settings/store";
+import Link from "next/link";
 
 export default async function GuestApplyPage({
   searchParams,
@@ -8,6 +10,24 @@ export default async function GuestApplyPage({
   searchParams: Promise<{ unit?: string }>;
 }) {
   const { unit: unitId } = await searchParams;
+  const enabled = await isFeatureEnabled("portalGuestApply");
+
+  if (!enabled) {
+    return (
+      <div>
+        <PortalPageHeader title="Rental Application" />
+        <PortalCard>
+          <p className="text-sm text-navy/70">
+            Rental applications are currently disabled. Please contact the office directly.
+          </p>
+          <Link href="/portal/guest" className="inline-block mt-4 text-gold hover:text-navy text-sm">
+            Back to dashboard
+          </Link>
+        </PortalCard>
+      </div>
+    );
+  }
+
   const units = await db.unit.findMany({
     where: { status: "AVAILABLE" },
     orderBy: { name: "asc" },

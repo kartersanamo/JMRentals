@@ -2,14 +2,20 @@ import { AnimateIn } from "@/components/ui/AnimateIn";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { site } from "@/lib/site-config";
 
-export function Welcome() {
+export function Welcome({
+  description = site.description,
+  galleryImage = site.gallery[4]?.src ?? site.heroImage,
+}: {
+  description?: string;
+  galleryImage?: string;
+}) {
   return (
     <section id="welcome" className="section-padding bg-cream">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
           eyebrow="Your New Home Awaits"
           title="Luxury Living Along the Bayou"
-          subtitle={site.description}
+          subtitle={description}
         />
         <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
           <AnimateIn>
@@ -31,7 +37,7 @@ export function Welcome() {
               <div
                 className="absolute inset-0 bg-cover bg-center"
                 style={{
-                  backgroundImage: `url(${site.gallery[4]?.src ?? site.heroImage})`,
+                  backgroundImage: `url(${galleryImage})`,
                 }}
                 role="img"
                 aria-label="Interior of J&M Rentals property"

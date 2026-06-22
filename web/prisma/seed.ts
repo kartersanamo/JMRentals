@@ -1,5 +1,11 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import { hashPassword } from "../lib/password";
+import {
+  DEFAULT_SITE_CONTENT,
+  DEFAULT_SYSTEM_CONFIG,
+  SITE_CONTENT_KEY,
+  SYSTEM_CONFIG_KEY,
+} from "../lib/settings/defaults";
 import { DEFAULT_UNIT_IMAGES } from "../lib/unit-images";
 
 const floorPlans = [
@@ -79,6 +85,24 @@ export async function seedDatabase(prisma: PrismaClient) {
       update: { value: setting.value },
     });
   }
+
+  await prisma.portalSetting.upsert({
+    where: { key: SYSTEM_CONFIG_KEY },
+    create: {
+      key: SYSTEM_CONFIG_KEY,
+      value: JSON.stringify(DEFAULT_SYSTEM_CONFIG, null, 2),
+    },
+    update: {},
+  });
+
+  await prisma.portalSetting.upsert({
+    where: { key: SITE_CONTENT_KEY },
+    create: {
+      key: SITE_CONTENT_KEY,
+      value: JSON.stringify(DEFAULT_SITE_CONTENT, null, 2),
+    },
+    update: {},
+  });
 
   const seedEmails = (process.env.ADMIN_SEED_EMAILS ?? "")
     .split(",")
