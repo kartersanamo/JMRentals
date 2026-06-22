@@ -1,7 +1,7 @@
 "use client";
 
 import { NavbarAuth } from "@/components/layout/NavbarAuth";
-import { site } from "@/lib/site-config";
+import { SiteLogo } from "@/components/brand/SiteLogo";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -43,12 +43,7 @@ export function Navbar() {
         className="mx-auto flex max-w-7xl items-center justify-between px-6 md:px-12 lg:px-20"
         aria-label="Main navigation"
       >
-        <Link
-          href="/"
-          className="font-display text-2xl md:text-3xl text-cream tracking-wide hover:text-gold transition-colors"
-        >
-          {site.name}
-        </Link>
+        <SiteLogo size="lg" linked priority className="md:scale-110" />
 
         <ul className="hidden lg:flex items-center gap-8">
           {navLinks.map((link) => (

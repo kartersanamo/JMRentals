@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import {
   dispatchPortalNotification,
   notifyAnnouncementPosted,
+  notifyApplicationApprovedWithLease,
   notifyApplicationStatusChanged,
   notifyApplicationSubmitted,
   notifyLeaseCreated,
@@ -23,6 +24,11 @@ import {
 } from "@/lib/notifications/catalog";
 import { isFeatureEnabled } from "@/lib/settings/store";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { getDefaultChecklist } from "@/lib/portal/checklist";
+import {
+  provisionLease,
+  provisionLeaseForApprovedApplication,
+} from "@/lib/leases/provision-lease";
 import {
   announcementSchema,
   applicationReviewSchema,
@@ -84,7 +90,7 @@ export async function submitApplication(formData: FormData) {
 }
 
 export async function reviewApplication(formData: FormData) {
-  await requireRole(["ADMIN", "STAFF"]);
+  const session = await requireRole(["ADMIN", "STAFF"]);
   const id = String(formData.get("id"));
   const parsed = applicationReviewSchema.safeParse({
     status: formData.get("status"),
@@ -92,13 +98,59 @@ export async function reviewApplication(formData: FormData) {
   });
   if (!parsed.success) return { error: "Invalid review data." };
 
-  await db.application.update({
+  const existing = await db.application.findUnique({
     where: { id },
-    data: parsed.data,
+    include: {
+      guest: true,
+      desiredUnit: true,
+    },
   });
-  await dispatchPortalNotification(() =>
-    notifyApplicationStatusChanged(id)
-  );
+  if (!existing) return { error: "Application not found." };
+
+  const becomingApproved =
+    parsed.data.status === "APPROVED" && existing.status !== "APPROVED";
+
+  if (becomingApproved) {
+    const applicationForLease = {
+      ...existing,
+      reviewNotes: parsed.data.reviewNotes ?? existing.reviewNotes,
+    };
+
+    const result = await db.$transaction(async (tx) => {
+      await tx.application.update({
+        where: { id },
+        data: parsed.data,
+      });
+      return provisionLeaseForApprovedApplication(tx, applicationForLease);
+    });
+
+    if ("error" in result) {
+      return { error: result.error };
+    }
+
+    if (session.user.role === "ADMIN") {
+      await createAuditLog({
+        actorId: session.user.id,
+        action: "LEASE_CREATED",
+        targetType: "User",
+        targetId: result.residentId,
+        details: `Auto-created from application ${id} · ${result.unitName}`,
+      });
+    }
+
+    await dispatchPortalNotification(() =>
+      notifyApplicationApprovedWithLease(id, result.leaseId)
+    );
+  } else {
+    await db.application.update({
+      where: { id },
+      data: parsed.data,
+    });
+    await dispatchPortalNotification(() =>
+      notifyApplicationStatusChanged(id)
+    );
+  }
+
   revalidatePortal();
   return { success: true };
 }
@@ -120,33 +172,20 @@ export async function createLease(formData: FormData) {
   });
   if (!resident) return { error: "Resident not found." };
 
+  const unit = await db.unit.findUnique({
+    where: { id: parsed.data.unitId },
+    select: { name: true },
+  });
+  if (!unit) return { error: "Unit not found." };
+
   await db.$transaction(async (tx) => {
-    await tx.lease.create({
-      data: {
-        residentId: parsed.data.residentId,
-        unitId: parsed.data.unitId,
-        startDate: new Date(parsed.data.startDate),
-        endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null,
-        monthlyRent: parsed.data.monthlyRent,
-        houseRules: parsed.data.houseRules,
-        status: "PENDING",
-      },
-    });
-    await tx.unit.update({
-      where: { id: parsed.data.unitId },
-      data: { status: "OCCUPIED" },
-    });
-    await tx.user.update({
-      where: { id: parsed.data.residentId },
-      data: { role: "RESIDENT" },
-    });
-    await tx.residentProfile.upsert({
-      where: { userId: parsed.data.residentId },
-      create: {
-        userId: parsed.data.residentId,
-        checklistProgress: await getDefaultChecklist(),
-      },
-      update: {},
+    await provisionLease(tx, {
+      residentId: parsed.data.residentId,
+      unitId: parsed.data.unitId,
+      startDate: new Date(parsed.data.startDate),
+      endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null,
+      monthlyRent: parsed.data.monthlyRent,
+      houseRules: parsed.data.houseRules,
     });
   });
 
@@ -160,32 +199,16 @@ export async function createLease(formData: FormData) {
     });
   }
 
-  const unit = await db.unit.findUnique({
-    where: { id: parsed.data.unitId },
-    select: { name: true },
-  });
   await dispatchPortalNotification(() =>
     notifyLeaseCreated(
       parsed.data.residentId,
-      unit?.name ?? "your unit",
+      unit.name,
       Number(parsed.data.monthlyRent)
     )
   );
 
   revalidatePortal();
   return { success: true };
-}
-
-async function getDefaultChecklist() {
-  const setting = await db.portalSetting.findUnique({
-    where: { key: "default_checklist" },
-  });
-  if (!setting) return {};
-  try {
-    return JSON.parse(setting.value);
-  } catch {
-    return {};
-  }
 }
 
 export async function createUserAccount(formData: FormData) {

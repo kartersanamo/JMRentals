@@ -20,7 +20,10 @@ export default async function StaffApplicationsPage() {
 
   return (
     <div>
-      <PortalPageHeader title="Applications" subtitle="Review and process rental applications." />
+      <PortalPageHeader
+        title="Applications"
+        subtitle="Review and process rental applications. Approving creates a pending lease for the guest's selected unit and emails them to sign."
+      />
       <PortalCard>
         {applications.length === 0 ? (
           <EmptyState message="No applications to review." />
@@ -50,7 +53,11 @@ export default async function StaffApplicationsPage() {
                     {app.additionalNotes}
                   </p>
                 )}
-                <ActionForm action={reviewApplication} successMessage="Application updated." className="space-y-2">
+                <ActionForm
+                  action={reviewApplication}
+                  successMessage="Application updated."
+                  className="space-y-2"
+                >
                   <input type="hidden" name="id" value={app.id} />
                   <select name="status" defaultValue={app.status} className="border border-navy/20 px-3 py-2 text-sm bg-white">
                     <option value="UNDER_REVIEW">Under Review</option>

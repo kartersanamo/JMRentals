@@ -58,6 +58,10 @@ export const metadata: Metadata = {
     images: ["/images/Outside.jpg"],
   },
   robots: { index: true, follow: true },
+  icons: {
+    icon: "/images/Logo_NoWords_NoBG.png",
+    apple: "/images/Logo_NoWords_NoBG.png",
+  },
 };
 
 export default function RootLayout({

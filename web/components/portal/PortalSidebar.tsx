@@ -2,7 +2,7 @@
 
 import type { UserRole } from "@prisma/client";
 import type { PortalNavIcon, PortalNavItem } from "@/lib/portal-nav";
-import { site } from "@/lib/site-config";
+import { SiteLogo } from "@/components/brand/SiteLogo";
 import {
   Bell,
   Building2,
@@ -63,9 +63,7 @@ export function PortalSidebar({ nav, user }: PortalSidebarProps) {
   const content = (
     <>
       <div className="p-6 border-b border-cream/10">
-        <Link href="/" className="font-display text-2xl text-cream hover:text-gold transition-colors">
-          {site.name}
-        </Link>
+        <SiteLogo size="md" linked className="mb-4" />
         <p className="mt-3 text-sm text-cream/70">{user.name}</p>
         <p className="text-xs text-gold uppercase tracking-wider mt-1">{user.role}</p>
       </div>

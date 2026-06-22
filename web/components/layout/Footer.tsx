@@ -1,3 +1,4 @@
+import { SiteLogo } from "@/components/brand/SiteLogo";
 import { site, getFullAddress } from "@/lib/site-config";
 import { Facebook, Mail, MapPin, Phone } from "lucide-react";
 import Link from "next/link";
@@ -23,7 +24,7 @@ export function Footer() {
       <div className="section-padding pb-12">
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
           <div>
-            <p className="font-display text-3xl text-gold mb-4">{site.name}</p>
+            <SiteLogo size="xl" linked className="mb-4" />
             <p className="text-cream/70 text-sm leading-relaxed mb-6">
               {site.tagline}. Beautiful rental homes in Larose, Louisiana.
             </p>

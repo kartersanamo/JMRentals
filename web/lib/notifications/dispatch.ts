@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getEmploymentDisplayText } from "@/lib/employment";
+import { formatApplicationSummary } from "@/lib/applications/summary";
 import { getPortalReplyAddress } from "@/lib/mailgun";
 import type { NotificationKey } from "@/lib/notifications/catalog";
 import { isNotificationEnabled } from "@/lib/notifications/catalog";
@@ -115,27 +115,7 @@ export async function notifyApplicationSubmitted(applicationId: string) {
   });
   if (!application) return;
 
-  const employmentText = getEmploymentDisplayText(
-    application.employmentDetails,
-    application.employmentInfo
-  );
-
-  const details = [
-    `Guest: ${application.guest.firstName} ${application.guest.lastName}`,
-    `Email: ${application.guest.email}`,
-    application.guest.phone ? `Phone: ${application.guest.phone}` : null,
-    `Unit: ${application.desiredUnit?.name ?? "No preference"}`,
-    application.moveInDate
-      ? `Move-in: ${application.moveInDate.toLocaleDateString()}`
-      : null,
-    application.additionalNotes
-      ? `Notes: ${application.additionalNotes}`
-      : null,
-    "",
-    employmentText,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const details = formatApplicationSummary(application);
 
   await notifyUsers(
     "application_submitted",
@@ -162,6 +142,75 @@ export async function notifyApplicationStatusChanged(applicationId: string) {
   await notifyUserById(application.guestId, "application_status_changed", (user) => ({
     subject: `Application update — ${application.status.replace(/_/g, " ")}`,
     text: `Hi ${user.firstName},\n\nYour rental application${application.desiredUnit ? ` for ${application.desiredUnit.name}` : ""} was updated to: ${application.status.replace(/_/g, " ")}.${application.reviewNotes ? `\n\nStaff note: ${application.reviewNotes}` : ""}\n\nView your applications:\n${portalLink("/portal/guest/applications")}`,
+  }));
+}
+
+export async function notifyApplicationApprovedWithLease(
+  applicationId: string,
+  leaseId: string
+) {
+  const [application, lease] = await Promise.all([
+    db.application.findUnique({
+      where: { id: applicationId },
+      include: {
+        guest: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+          },
+        },
+        desiredUnit: { select: { name: true } },
+      },
+    }),
+    db.lease.findUnique({
+      where: { id: leaseId },
+      include: { unit: { select: { name: true } } },
+    }),
+  ]);
+
+  if (!application || !lease) return;
+
+  const applicationSummary = formatApplicationSummary(application);
+  const leaseLink = portalLink("/portal/resident/lease");
+  const leaseDetails = [
+    `Unit: ${lease.unit.name}`,
+    `Monthly rent: $${Number(lease.monthlyRent).toLocaleString()}`,
+    `Lease start: ${lease.startDate.toLocaleDateString()}`,
+  ].join("\n");
+
+  await notifyUserById(application.guest.id, "lease_created", (user) => ({
+    subject: `Application approved — sign your lease for ${lease.unit.name}`,
+    text: `Hi ${user.firstName},
+
+Congratulations! Your rental application has been approved and your lease is ready to sign.
+
+YOUR APPLICATION
+----------------
+${applicationSummary}
+
+YOUR LEASE
+----------
+${leaseDetails}
+
+NEXT STEP
+---------
+Please review and sign your lease in the resident portal:
+${leaseLink}
+
+Sign in with your existing portal account. After you sign electronically, your lease becomes active.`,
+    html: `<p>Hi ${user.firstName},</p>
+<p><strong>Congratulations!</strong> Your rental application has been approved and your lease is ready to sign.</p>
+<h3>Your application</h3>
+<pre style="white-space:pre-wrap;font-family:inherit;">${applicationSummary}</pre>
+<h3>Your lease</h3>
+<pre style="white-space:pre-wrap;font-family:inherit;">${leaseDetails}</pre>
+<h3>Next step</h3>
+<p>Please review and sign your lease in the resident portal:</p>
+<p><a href="${leaseLink}">Sign your lease</a></p>
+<p>Sign in with your existing portal account. After you sign electronically, your lease becomes active.</p>`,
   }));
 }
 
