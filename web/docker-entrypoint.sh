@@ -1,8 +1,8 @@
 #!/bin/sh
 cd /app
-if [ -n "$DATABASE_URL" ] && [ -f ./node_modules/.bin/prisma ]; then
+if [ -n "$DATABASE_URL" ] && [ -f ./node_modules/prisma/build/index.js ]; then
   echo "Running database migrations..."
-  if ! ./node_modules/.bin/prisma migrate deploy; then
+  if ! node ./node_modules/prisma/build/index.js migrate deploy; then
     echo "WARNING: In-container migration failed. Run 'npm run db:deploy' on the host before deploy."
   fi
 fi

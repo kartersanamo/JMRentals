@@ -43,7 +43,10 @@ export function LoginForm() {
     });
 
     if (result?.error) {
-      if (result.code === "email_not_verified") {
+      if (
+        result.code === "email_not_verified" ||
+        result.error === "email_not_verified"
+      ) {
         setError("Please verify your email before signing in.");
         router.push(
           `/verify-email?email=${encodeURIComponent(data.email.toLowerCase())}`

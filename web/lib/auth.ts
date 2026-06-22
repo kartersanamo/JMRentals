@@ -47,6 +47,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/login",
   },
+  logger: {
+    error(error) {
+      if (error instanceof CredentialsSignin) {
+        return;
+      }
+      console.error("[auth]", error);
+    },
+  },
   providers: [
     Credentials({
       name: "credentials",
@@ -55,32 +63,47 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials);
+        const parsed = loginSchema.safeParse({
+          email:
+            typeof credentials?.email === "string"
+              ? credentials.email.trim().toLowerCase()
+              : credentials?.email,
+          password: credentials?.password,
+        });
         if (!parsed.success) return null;
 
-        const user = await db.user.findUnique({
-          where: { email: parsed.data.email.toLowerCase() },
-        });
+        try {
+          const user = await db.user.findUnique({
+            where: { email: parsed.data.email },
+          });
 
-        if (!user || user.status !== "ACTIVE") return null;
+          if (!user) return null;
+          if (user.status !== "ACTIVE") return null;
 
-        const valid = await verifyPassword(
-          parsed.data.password,
-          user.passwordHash
-        );
-        if (!valid) return null;
+          const valid = await verifyPassword(
+            parsed.data.password,
+            user.passwordHash
+          );
+          if (!valid) return null;
 
-        if (user.role === "GUEST" && !user.emailVerifiedAt) {
-          throw new EmailNotVerifiedError();
+          if (user.role === "GUEST" && !user.emailVerifiedAt) {
+            throw new EmailNotVerifiedError();
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: `${user.firstName} ${user.lastName}`,
+            role: user.role,
+            mustChangePassword: user.mustChangePassword,
+          };
+        } catch (error) {
+          if (error instanceof EmailNotVerifiedError) {
+            throw error;
+          }
+          console.error("[auth] sign-in database error:", error);
+          return null;
         }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: `${user.firstName} ${user.lastName}`,
-          role: user.role,
-          mustChangePassword: user.mustChangePassword,
-        };
       },
     }),
   ],
