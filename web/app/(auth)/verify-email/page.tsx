@@ -146,7 +146,7 @@ function VerifyEmailForm() {
 
 export default function VerifyEmailPage() {
   return (
-    <div className="min-h-screen bg-navy flex flex-col items-center justify-center px-6 py-16">
+    <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
       <SiteLogo size="lg" linked className="mb-8" />
       <div className="w-full max-w-md bg-cream p-8 md:p-10 shadow-xl border border-gold/20">
         <h1 className="font-display text-3xl text-navy text-center mb-2">

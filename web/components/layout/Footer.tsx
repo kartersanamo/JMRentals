@@ -1,5 +1,5 @@
 import { SiteLogo } from "@/components/brand/SiteLogo";
-import { site, getFullAddress } from "@/lib/site-config";
+import { site, getDirectionsUrl, getFullAddress } from "@/lib/site-config";
 import { Facebook, Mail, MapPin, Phone } from "lucide-react";
 import Link from "next/link";
 
@@ -8,7 +8,13 @@ const exploreLinks = [
   { href: "/amenities", label: "Amenities" },
   { href: "/gallery", label: "Gallery" },
   { href: "/book", label: "Book Now" },
+  { href: "/#location", label: "Location" },
   { href: "/#contact", label: "Contact" },
+];
+
+const portalLinks = [
+  { href: "/login", label: "Sign In" },
+  { href: "/register", label: "Create Account" },
 ];
 
 const legalLinks = [
@@ -16,11 +22,24 @@ const legalLinks = [
   { href: "/privacy", label: "Privacy Policy" },
 ];
 
+function formatOfficeHoursSummary(): string {
+  const weekdays = site.hours.filter((entry) => !entry.closed);
+  if (weekdays.length === 0) return "By appointment";
+
+  const first = weekdays[0];
+  const last = weekdays[weekdays.length - 1];
+  if (first.open && first.close) {
+    return `${first.day.slice(0, 3)}–${last.day.slice(0, 3)} ${first.open} – ${first.close}`;
+  }
+  return "See contact for hours";
+}
+
 export function Footer() {
   const year = new Date().getFullYear();
+  const directionsUrl = getDirectionsUrl();
 
   return (
-    <footer className="bg-navy text-cream">
+    <footer className="bg-navy text-cream shrink-0">
       <div className="section-padding pb-12">
         <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
           <div>
@@ -38,6 +57,23 @@ export function Footer() {
               <Facebook size={18} aria-hidden />
               Follow on Facebook
             </a>
+            <div className="mt-6 pt-6 border-t border-cream/10">
+              <p className="text-xs uppercase tracking-[0.25em] text-gold mb-3">
+                Portal
+              </p>
+              <ul className="space-y-2">
+                {portalLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-cream/75 hover:text-gold transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
           <div>
@@ -83,11 +119,23 @@ export function Footer() {
             <ul className="space-y-4 text-sm text-cream/75">
               <li className="flex gap-3">
                 <MapPin size={16} className="shrink-0 text-gold mt-0.5" aria-hidden />
-                <span>{getFullAddress()}</span>
+                <span>
+                  <a
+                    href={directionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-gold transition-colors"
+                  >
+                    {getFullAddress()}
+                  </a>
+                </span>
               </li>
               <li className="flex gap-3">
                 <Phone size={16} className="shrink-0 text-gold mt-0.5" aria-hidden />
-                <a href={`tel:${site.phone.replace(/\D/g, "")}`} className="hover:text-gold transition-colors">
+                <a
+                  href={`tel:${site.phone.replace(/\D/g, "")}`}
+                  className="hover:text-gold transition-colors"
+                >
                   {site.phone}
                 </a>
               </li>
@@ -95,6 +143,19 @@ export function Footer() {
                 <Mail size={16} className="shrink-0 text-gold mt-0.5" aria-hidden />
                 <a href={`mailto:${site.email}`} className="hover:text-gold transition-colors">
                   {site.email}
+                </a>
+              </li>
+              <li className="pl-7 text-cream/60 text-xs">
+                Office hours: {formatOfficeHoursSummary()}
+              </li>
+              <li className="pl-7">
+                <a
+                  href={directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs uppercase tracking-wider text-gold hover:text-cream transition-colors"
+                >
+                  Get directions →
                 </a>
               </li>
             </ul>
@@ -107,7 +168,17 @@ export function Footer() {
           <p>
             © {year} {site.legalName}. All rights reserved.
           </p>
-          <p>Larose, Louisiana · Bayou-side living</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <Link href="/terms" className="hover:text-gold transition-colors">
+              Terms
+            </Link>
+            <span aria-hidden>·</span>
+            <Link href="/privacy" className="hover:text-gold transition-colors">
+              Privacy
+            </Link>
+            <span aria-hidden>·</span>
+            <span>Larose, Louisiana · Bayou-side living</span>
+          </div>
         </div>
       </div>
     </footer>

@@ -1,3 +1,5 @@
+import { Footer } from "@/components/layout/Footer";
+
 export const dynamic = "force-dynamic";
 
 export default function AuthLayout({
@@ -5,5 +7,10 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <div className="min-h-screen flex flex-col bg-navy">
+      <main className="flex-1 flex flex-col">{children}</main>
+      <Footer />
+    </div>
+  );
 }
