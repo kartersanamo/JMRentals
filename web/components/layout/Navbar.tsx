@@ -60,12 +60,9 @@ export function Navbar() {
           <li>
             <Link
               href="/book"
-              className="inline-flex items-center gap-2 bg-gold/20 border border-gold/50 text-gold px-4 py-2 text-xs uppercase tracking-widest hover:bg-gold hover:text-navy transition-all"
+              className="inline-flex items-center bg-gold/20 border border-gold/50 text-gold px-4 py-2 text-xs uppercase tracking-widest hover:bg-gold hover:text-navy transition-all"
             >
-              Book
-              <span className="text-[10px] bg-gold text-navy px-1.5 py-0.5 font-bold">
-                Soon
-              </span>
+              Book Now
             </Link>
           </li>
         </ul>
@@ -108,12 +105,9 @@ export function Navbar() {
               <Link
                 href="/book"
                 onClick={() => setOpen(false)}
-                className="inline-flex items-center gap-2 text-gold text-xl font-display"
+                className="text-xl font-display text-gold hover:text-cream transition-colors"
               >
-                Book Online
-                <span className="text-xs bg-gold text-navy px-2 py-0.5 uppercase font-sans font-bold">
-                  Coming Soon
-                </span>
+                Book Now
               </Link>
             </li>
           </ul>

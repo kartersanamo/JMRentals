@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { SITE_FAVICON_SRC } from "@/components/brand/SiteLogo";
 import { site } from "@/lib/site-config";
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
@@ -59,8 +60,8 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true },
   icons: {
-    icon: "/images/Logo_NoWords_NoBG.png",
-    apple: "/images/Logo_NoWords_NoBG.png",
+    icon: SITE_FAVICON_SRC,
+    apple: SITE_FAVICON_SRC,
   },
 };
 

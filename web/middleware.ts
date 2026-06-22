@@ -20,6 +20,10 @@ export default auth((req) => {
   }
 
   if (isLoggedIn && isAuthPage) {
+    const callbackUrl = req.nextUrl.searchParams.get("callbackUrl");
+    if (callbackUrl?.startsWith("/")) {
+      return NextResponse.redirect(new URL(callbackUrl, req.nextUrl.origin));
+    }
     return NextResponse.redirect(
       new URL(getRoleHome(session.user.role), req.nextUrl.origin)
     );

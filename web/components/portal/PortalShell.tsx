@@ -1,5 +1,6 @@
 import { auth, signOut } from "@/lib/auth";
 import { SiteLogo } from "@/components/brand/SiteLogo";
+import { db } from "@/lib/db";
 import { getPortalNav } from "@/lib/portal-nav";
 import { LogOut } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -8,6 +9,19 @@ import { PortalSidebar } from "./PortalSidebar";
 export async function PortalShell({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  const dbUser = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, status: true },
+  });
+
+  if (!dbUser || dbUser.status !== "ACTIVE") {
+    redirect("/login");
+  }
+
+  if (dbUser.role !== session.user.role) {
+    redirect("/login?reason=role_updated");
+  }
 
   const nav = getPortalNav(session.user.role);
 

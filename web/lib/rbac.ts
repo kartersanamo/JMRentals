@@ -30,6 +30,9 @@ export function canAccessRolePath(
   if (path.startsWith("/portal/resident")) {
     return userRole === "RESIDENT";
   }
+  if (path.startsWith("/portal/guest/units")) {
+    return true;
+  }
   if (path.startsWith("/portal/guest")) {
     return userRole === "GUEST";
   }

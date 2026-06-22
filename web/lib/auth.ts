@@ -90,21 +90,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id!;
         token.role = user.role;
         token.mustChangePassword = user.mustChangePassword;
-        return token;
       }
-
-      if (!token.id) return token;
-
-      const dbUser = await db.user.findUnique({
-        where: { id: token.id },
-        select: { role: true, mustChangePassword: true, status: true },
-      });
-
-      if (dbUser?.status === "ACTIVE") {
-        token.role = dbUser.role;
-        token.mustChangePassword = dbUser.mustChangePassword;
-      }
-
       return token;
     },
     async session({ session, token }) {

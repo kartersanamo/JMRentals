@@ -7,7 +7,7 @@ import { PhoneField } from "@/components/ui/PhoneField";
 import { registerSchema } from "@/lib/validators/portal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -16,6 +16,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/portal";
   const [error, setError] = useState("");
 
   const {
@@ -55,10 +57,14 @@ export function RegisterForm() {
       return;
     }
     if (json.verified || !json.needsVerification) {
-      router.push("/login?verified=1");
+      router.push(
+        `/login?verified=1&callbackUrl=${encodeURIComponent(callbackUrl)}`
+      );
       return;
     }
-    router.push(`/verify-email?email=${encodeURIComponent(json.email)}`);
+    router.push(
+      `/verify-email?email=${encodeURIComponent(json.email)}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+    );
   };
 
   return (
@@ -137,7 +143,10 @@ export function RegisterForm() {
 
       <p className="mt-8 text-center text-sm text-navy/60">
         Already have an account?{" "}
-        <Link href="/login" className="text-gold hover:text-navy font-medium">
+        <Link
+          href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+          className="text-gold hover:text-navy font-medium"
+        >
           Sign in
         </Link>
       </p>

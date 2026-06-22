@@ -107,7 +107,10 @@ export function LoginForm() {
 
       <p className="mt-8 text-center text-sm text-navy/60">
         New here?{" "}
-        <Link href="/register" className="text-gold hover:text-navy font-medium">
+        <Link
+          href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+          className="text-gold hover:text-navy font-medium"
+        >
           Create a guest account
         </Link>
       </p>

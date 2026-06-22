@@ -2,6 +2,7 @@ import { RegisterForm } from "@/components/auth/RegisterForm";
 import { SiteLogo } from "@/components/brand/SiteLogo";
 import { isFeatureEnabled } from "@/lib/settings/store";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,9 @@ export default async function RegisterPage() {
         </p>
 
         {enabled ? (
-          <RegisterForm />
+          <Suspense fallback={<p className="text-center text-navy/60">Loading…</p>}>
+            <RegisterForm />
+          </Suspense>
         ) : (
           <div className="text-center space-y-4">
             <p className="text-sm text-navy/70">

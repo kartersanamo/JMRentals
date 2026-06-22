@@ -65,7 +65,7 @@ export function Hero({
             Contact Us
           </ButtonLink>
           <ButtonLink href="/book" variant="ghost" size="md" className="opacity-90">
-            Book Online — Coming Soon
+            Book Now
           </ButtonLink>
         </motion.div>
       </div>
