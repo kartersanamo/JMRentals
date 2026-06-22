@@ -10,7 +10,7 @@ import { hashPassword } from "@/lib/password";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { isFeatureEnabled } from "@/lib/settings/store";
-import { registerSchema } from "@/lib/validators/portal";
+import { registerApiSchema } from "@/lib/validators/portal";
 import { NextRequest } from "next/server";
 
 async function issueVerificationCode(
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const parsed = registerSchema.safeParse(body);
+    const parsed = registerApiSchema.safeParse(body);
     if (!parsed.success) {
       return jsonError("Invalid registration data.", 400);
     }

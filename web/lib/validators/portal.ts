@@ -8,19 +8,27 @@ import {
   strongPasswordSchema,
 } from "@/lib/validators/fields";
 
-export const registerSchema = z
-  .object({
-    email: emailFieldSchema,
-    password: strongPasswordSchema,
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-    firstName: z.string().min(1, "First name required").max(80),
-    lastName: z.string().min(1, "Last name required").max(80),
-    phone: optionalPhoneFieldSchema,
-  })
-  .refine((data) => passwordsMatchRefine(data), {
+const registerBaseSchema = z.object({
+  email: emailFieldSchema,
+  password: strongPasswordSchema,
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+  firstName: z.string().min(1, "First name required").max(80),
+  lastName: z.string().min(1, "Last name required").max(80),
+  phone: optionalPhoneFieldSchema,
+});
+
+export const registerSchema = registerBaseSchema.refine(
+  (data) => passwordsMatchRefine(data),
+  {
     message: passwordMatchMessage,
     path: ["confirmPassword"],
-  });
+  }
+);
+
+/** API payload after client-side confirm-password validation */
+export const registerApiSchema = registerBaseSchema.omit({
+  confirmPassword: true,
+});
 
 export const verifyEmailSchema = z.object({
   email: emailFieldSchema,
