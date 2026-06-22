@@ -3,6 +3,7 @@ import type { UserRole } from "@prisma/client";
 export type NotificationKey =
   | "application_submitted"
   | "application_status_changed"
+  | "application_proposal"
   | "maintenance_submitted"
   | "maintenance_status_changed"
   | "portal_message_to_staff"
@@ -44,6 +45,14 @@ export const NOTIFICATION_CATALOG: NotificationDefinition[] = [
     category: "applications",
     label: "Application status updates",
     description: "When staff reviews or updates your application",
+    roles: ["GUEST"],
+    defaultEnabled: true,
+  },
+  {
+    key: "application_proposal",
+    category: "applications",
+    label: "Lease term proposals",
+    description: "When staff proposes lease changes for you to confirm",
     roles: ["GUEST"],
     defaultEnabled: true,
   },

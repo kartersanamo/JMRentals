@@ -64,7 +64,6 @@ export function getPortalNav(role: UserRole): PortalNavItem[] {
         { href: "/portal/resident/maintenance", label: "Maintenance", icon: "wrench" },
         { href: "/portal/resident/payments", label: "Payments", icon: "credit-card" },
         { href: "/portal/resident/home-info", label: "Home Info", icon: "building" },
-        { href: "/portal/resident/checklist", label: "Move-In Checklist", icon: "clipboard" },
         { href: "/portal/resident/messages", label: "Messages", icon: "message" },
         { href: "/portal/resident/community", label: "Community", icon: "megaphone" },
         { href: "/portal/notifications", label: "Notifications", icon: "bell" },

@@ -1,28 +1,40 @@
-import { ActionForm } from "@/components/portal/ActionForm";
 import { EmploymentSummary } from "@/components/portal/EmploymentSummary";
+import { ApplicationReviewPanel } from "@/components/portal/ApplicationReviewPanel";
 import {
   EmptyState,
   PortalCard,
   PortalPageHeader,
   StatusBadge,
 } from "@/components/portal/PortalCard";
-import { reviewApplication } from "@/lib/actions/portal";
+import { formatRentTerm } from "@/lib/applications/effective";
 import { db } from "@/lib/db";
 
 export default async function StaffApplicationsPage() {
-  const applications = await db.application.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      guest: { select: { firstName: true, lastName: true, email: true } },
-      desiredUnit: true,
-    },
-  });
+  const [applications, units] = await Promise.all([
+    db.application.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        guest: { select: { firstName: true, lastName: true, email: true } },
+        desiredUnit: true,
+        proposedUnit: true,
+      },
+    }),
+    db.unit.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        monthlyRent: true,
+        status: true,
+      },
+    }),
+  ]);
 
   return (
     <div>
       <PortalPageHeader
         title="Applications"
-        subtitle="Review and process rental applications. Approving creates a pending lease for the guest's selected unit and emails them to sign."
+        subtitle="Review applications, propose lease terms for guest confirmation, then approve to create a pending lease and email the guest to sign."
       />
       <PortalCard>
         {applications.length === 0 ? (
@@ -40,8 +52,19 @@ export default async function StaffApplicationsPage() {
                     <p className="text-sm text-navy/70 mt-1">
                       Unit: {app.desiredUnit?.name ?? "No preference"}
                     </p>
+                    {app.moveInDate && (
+                      <p className="text-sm text-navy/70">
+                        Move-in: {app.moveInDate.toLocaleDateString()} ·{" "}
+                        {formatRentTerm(app.rentTerm)}
+                      </p>
+                    )}
                   </div>
-                  <StatusBadge status={app.status} />
+                  <div className="flex flex-col items-end gap-2">
+                    <StatusBadge status={app.status} />
+                    {app.proposalStatus && (
+                      <StatusBadge status={app.proposalStatus} />
+                    )}
+                  </div>
                 </div>
                 <EmploymentSummary
                   employmentDetails={app.employmentDetails}
@@ -53,25 +76,32 @@ export default async function StaffApplicationsPage() {
                     {app.additionalNotes}
                   </p>
                 )}
-                <ActionForm
-                  action={reviewApplication}
-                  successMessage="Application updated."
-                  className="space-y-2"
-                >
-                  <input type="hidden" name="id" value={app.id} />
-                  <select name="status" defaultValue={app.status} className="border border-navy/20 px-3 py-2 text-sm bg-white">
-                    <option value="UNDER_REVIEW">Under Review</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="DENIED">Denied</option>
-                  </select>
-                  <textarea
-                    name="reviewNotes"
-                    rows={2}
-                    defaultValue={app.reviewNotes ?? ""}
-                    placeholder="Review notes (visible to guest)…"
-                    className="w-full border border-navy/20 px-3 py-2 text-sm bg-white"
-                  />
-                </ActionForm>
+                <ApplicationReviewPanel
+                  application={{
+                    id: app.id,
+                    status: app.status,
+                    reviewNotes: app.reviewNotes,
+                    moveInDate: app.moveInDate?.toISOString() ?? null,
+                    rentTerm: app.rentTerm,
+                    desiredUnitId: app.desiredUnitId,
+                    proposedUnitId: app.proposedUnitId,
+                    proposedMoveInDate:
+                      app.proposedMoveInDate?.toISOString() ?? null,
+                    proposedRentTerm: app.proposedRentTerm,
+                    proposedMonthlyRent:
+                      app.proposedMonthlyRent != null
+                        ? Number(app.proposedMonthlyRent)
+                        : null,
+                    proposalStatus: app.proposalStatus,
+                    proposalNotes: app.proposalNotes,
+                    guestConfirmedAt:
+                      app.guestConfirmedAt?.toISOString() ?? null,
+                  }}
+                  units={units.map((unit) => ({
+                    ...unit,
+                    monthlyRent: Number(unit.monthlyRent),
+                  }))}
+                />
               </div>
             ))}
           </div>

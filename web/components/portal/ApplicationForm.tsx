@@ -1,13 +1,16 @@
 "use client";
 
 import { ActionForm } from "@/components/portal/ActionForm";
+import { MoveInCalendar } from "@/components/portal/MoveInCalendar";
+import { RentTermPicker } from "@/components/portal/RentTermPicker";
 import { Button } from "@/components/ui/Button";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { submitApplication } from "@/lib/actions/portal";
+import { isDateInBlockedMonth, type MonthKey } from "@/lib/availability/unit-availability";
 import type { PreviousJob } from "@/lib/validators/portal";
 import { employmentDetailsSchema } from "@/lib/validators/portal";
 import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const fieldClass =
   "w-full border border-navy/20 px-4 py-3 text-navy bg-white focus:outline-none focus:border-gold";
@@ -27,6 +30,12 @@ type UnitOption = {
   monthlyRent: number;
 };
 
+type UnitAvailability = {
+  id: string;
+  name: string;
+  blockedMonths: string[];
+};
+
 export function ApplicationForm({
   units,
   defaultUnitId,
@@ -34,6 +43,11 @@ export function ApplicationForm({
   units: UnitOption[];
   defaultUnitId?: string;
 }) {
+  const [selectedUnitId, setSelectedUnitId] = useState(defaultUnitId ?? "");
+  const [moveInDate, setMoveInDate] = useState("");
+  const [rentTerm, setRentTerm] = useState<"MONTHLY" | "ANNUALLY">("MONTHLY");
+  const [availability, setAvailability] = useState<UnitAvailability[]>([]);
+  const [availabilityError, setAvailabilityError] = useState("");
   const [currentEmployer, setCurrentEmployer] = useState("");
   const [currentPosition, setCurrentPosition] = useState("");
   const [employmentStartDate, setEmploymentStartDate] = useState("");
@@ -42,6 +56,35 @@ export function ApplicationForm({
   const [supervisorName, setSupervisorName] = useState("");
   const [previousJobs, setPreviousJobs] = useState<PreviousJob[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAvailability() {
+      setAvailabilityError("");
+      try {
+        const res = await fetch("/api/portal/unit-availability");
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(json.error ?? "Could not load availability.");
+        }
+        if (!cancelled) {
+          setAvailability(json.units ?? []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setAvailabilityError(
+            error instanceof Error ? error.message : "Could not load availability."
+          );
+        }
+      }
+    }
+
+    void loadAvailability();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function updatePreviousJob(
     index: number,
@@ -63,6 +106,19 @@ export function ApplicationForm({
 
   async function handleSubmit(formData: FormData) {
     setFieldErrors({});
+
+    if (!selectedUnitId) {
+      return { error: "Please select a preferred unit." };
+    }
+    if (!moveInDate) {
+      return { error: "Please select a move-in date." };
+    }
+
+    const unitAvailability = availability.find((unit) => unit.id === selectedUnitId);
+    const blockedMonths = new Set((unitAvailability?.blockedMonths ?? []) as MonthKey[]);
+    if (isDateInBlockedMonth(new Date(`${moveInDate}T12:00:00`), blockedMonths)) {
+      return { error: "The selected move-in month is booked for this unit." };
+    }
 
     const filledPreviousJobs = previousJobs.filter(
       (job) =>
@@ -93,6 +149,9 @@ export function ApplicationForm({
       return { error: "Please fix the employment and income fields below." };
     }
 
+    formData.set("desiredUnitId", selectedUnitId);
+    formData.set("moveInDate", moveInDate);
+    formData.set("rentTerm", rentTerm);
     formData.set("employmentDetails", JSON.stringify(parsed.data));
     return submitApplication(formData);
   }
@@ -108,15 +167,19 @@ export function ApplicationForm({
     >
       <div>
         <label htmlFor="desiredUnitId" className={labelClass}>
-          Preferred Unit
+          Preferred Unit *
         </label>
         <select
           id="desiredUnitId"
-          name="desiredUnitId"
-          defaultValue={defaultUnitId ?? ""}
+          value={selectedUnitId}
+          onChange={(event) => {
+            setSelectedUnitId(event.target.value);
+            setMoveInDate("");
+          }}
           className={fieldClass}
+          required
         >
-          <option value="">No preference</option>
+          <option value="">Select a unit</option>
           {units.map((u) => (
             <option key={u.id} value={u.id}>
               {u.name} — ${u.monthlyRent.toLocaleString()}/mo
@@ -126,16 +189,20 @@ export function ApplicationForm({
       </div>
 
       <div>
-        <label htmlFor="moveInDate" className={labelClass}>
-          Desired Move-In Date
-        </label>
-        <input
-          id="moveInDate"
-          type="date"
-          name="moveInDate"
-          className={fieldClass}
+        <p className={labelClass}>Desired Move-In Date *</p>
+        {availabilityError ? (
+          <p className="text-sm text-red-700 mb-2">{availabilityError}</p>
+        ) : null}
+        <MoveInCalendar
+          unitId={selectedUnitId}
+          units={availability}
+          selectedDate={moveInDate}
+          onSelect={setMoveInDate}
         />
+        <input type="hidden" name="moveInDate" value={moveInDate} />
       </div>
+
+      <RentTermPicker value={rentTerm} onChange={setRentTerm} />
 
       <fieldset className="border border-navy/10 p-5 space-y-5">
         <legend className="px-2 font-display text-lg text-navy">

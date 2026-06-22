@@ -66,11 +66,28 @@ export const employmentDetailsSchema = z.object({
   previousJobs: z.array(previousJobSchema).max(10),
 });
 
+export const rentTermSchema = z.enum(["MONTHLY", "ANNUALLY"]);
+
 export const applicationSchema = z.object({
-  desiredUnitId: z.string().optional(),
-  moveInDate: z.string().optional(),
+  desiredUnitId: z.string().min(1, "Please select a unit"),
+  moveInDate: z.string().min(1, "Please select a move-in date"),
+  rentTerm: rentTermSchema.default("MONTHLY"),
   employmentDetails: employmentDetailsSchema,
   additionalNotes: z.string().max(2000).optional(),
+});
+
+export const applicationProposalSchema = z.object({
+  applicationId: z.string().min(1),
+  proposedUnitId: z.string().min(1, "Unit is required"),
+  proposedMoveInDate: z.string().min(1, "Move-in date is required"),
+  proposedRentTerm: rentTermSchema.default("MONTHLY"),
+  proposedMonthlyRent: z.coerce.number().positive("Rent must be greater than zero"),
+  proposalNotes: z.string().max(2000).optional(),
+  reviewNotes: z.string().max(2000).optional(),
+});
+
+export const proposalTokenSchema = z.object({
+  token: z.string().min(1),
 });
 
 export const maintenanceSchema = z.object({

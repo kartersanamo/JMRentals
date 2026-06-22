@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { formatApplicationSummary } from "@/lib/applications/summary";
+import { formatRentTerm } from "@/lib/applications/effective";
 import { getPortalReplyAddress } from "@/lib/mailgun";
 import type { NotificationKey } from "@/lib/notifications/catalog";
 import { isNotificationEnabled } from "@/lib/notifications/catalog";
@@ -127,6 +128,57 @@ export async function notifyApplicationSubmitted(applicationId: string) {
     }),
     [application.guestId]
   );
+}
+
+export async function notifyApplicationProposal(
+  applicationId: string,
+  token: string
+) {
+  const application = await db.application.findUnique({
+    where: { id: applicationId },
+    include: {
+      guest: { select: { id: true, firstName: true, lastName: true } },
+      desiredUnit: { select: { name: true } },
+      proposedUnit: { select: { name: true } },
+    },
+  });
+  if (!application || !application.proposedUnit) return;
+
+  const confirmLink = portalLink(
+    `/portal/guest/applications/confirm?token=${encodeURIComponent(token)}`
+  );
+  const proposedRent = application.proposedMonthlyRent
+    ? `$${Number(application.proposedMonthlyRent).toLocaleString()}`
+    : "—";
+  const proposedMoveIn = application.proposedMoveInDate
+    ? application.proposedMoveInDate.toLocaleDateString()
+    : "—";
+
+  await notifyUserById(application.guest.id, "application_proposal", (user) => ({
+    subject: `Please confirm your lease terms — ${application.proposedUnit?.name}`,
+    text: `Hi ${user.firstName},
+
+Our team proposed updated lease terms for your rental application:
+
+Unit: ${application.proposedUnit?.name}
+Move-in date: ${proposedMoveIn}
+Rent: ${proposedRent} (${formatRentTerm(application.proposedRentTerm ?? "MONTHLY")})
+${application.proposalNotes ? `\nNote from staff: ${application.proposalNotes}\n` : ""}
+Please review and confirm these terms before we can finalize your application:
+
+${confirmLink}
+
+If something looks wrong, you can decline on that page and we'll follow up with you.`,
+    html: `<p>Hi ${user.firstName},</p>
+<p>Our team proposed updated lease terms for your rental application:</p>
+<ul>
+  <li><strong>Unit:</strong> ${application.proposedUnit?.name}</li>
+  <li><strong>Move-in date:</strong> ${proposedMoveIn}</li>
+  <li><strong>Rent:</strong> ${proposedRent} (${formatRentTerm(application.proposedRentTerm ?? "MONTHLY")})</li>
+</ul>
+${application.proposalNotes ? `<p><strong>Note from staff:</strong> ${application.proposalNotes}</p>` : ""}
+<p><a href="${confirmLink}">Review and confirm lease terms</a></p>`,
+  }));
 }
 
 export async function notifyApplicationStatusChanged(applicationId: string) {

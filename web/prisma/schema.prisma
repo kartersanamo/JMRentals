@@ -38,6 +38,17 @@ enum ApplicationStatus {
   DENIED
 }
 
+enum RentTerm {
+  MONTHLY
+  ANNUALLY
+}
+
+enum ProposalStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
 enum MaintenancePriority {
   LOW
   MEDIUM
@@ -148,6 +159,7 @@ model Unit {
 
   leases       Lease[]
   applications Application[]
+  proposedApplications Application[] @relation("ProposedUnit")
   documents    Document[]
   announcements Announcement[]
 }
@@ -184,19 +196,32 @@ model Application {
   guestId         String
   desiredUnitId   String?
   moveInDate      DateTime?
+  rentTerm        RentTerm          @default(MONTHLY)
   employmentInfo  String?           @db.Text
   employmentDetails Json?
   additionalNotes String?           @db.Text
   status          ApplicationStatus @default(SUBMITTED)
   reviewNotes     String?           @db.Text
+  proposedUnitId       String?
+  proposedMoveInDate   DateTime?
+  proposedRentTerm     RentTerm?
+  proposedMonthlyRent  Decimal?     @db.Decimal(10, 2)
+  proposalStatus       ProposalStatus?
+  proposalNotes        String?      @db.Text
+  proposalToken        String?      @unique
+  proposalTokenExpires DateTime?
+  guestConfirmedAt     DateTime?
+  proposedAt           DateTime?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
   guest       User  @relation(fields: [guestId], references: [id], onDelete: Cascade)
   desiredUnit Unit? @relation(fields: [desiredUnitId], references: [id], onDelete: SetNull)
+  proposedUnit Unit? @relation("ProposedUnit", fields: [proposedUnitId], references: [id], onDelete: SetNull)
 
   @@index([guestId])
   @@index([status])
+  @@index([proposedUnitId])
 }
 
 model MaintenanceRequest {

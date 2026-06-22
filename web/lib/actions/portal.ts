@@ -1,12 +1,21 @@
 "use server";
 
 import { createAuditLog } from "@/lib/audit";
+import {
+  getEffectiveApplicationTerms,
+} from "@/lib/applications/effective";
+import {
+  generateProposalToken,
+  getProposalTokenExpiry,
+} from "@/lib/applications/proposal-token";
+import { isMoveInDateAvailable, getUnitAvailabilityMaps } from "@/lib/availability/unit-availability";
 import { normalizeJsonString } from "@/lib/json";
 import { auth, requireRole, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   dispatchPortalNotification,
   notifyAnnouncementPosted,
+  notifyApplicationProposal,
   notifyApplicationApprovedWithLease,
   notifyApplicationStatusChanged,
   notifyApplicationSubmitted,
@@ -31,11 +40,11 @@ import {
 } from "@/lib/leases/provision-lease";
 import {
   announcementSchema,
+  applicationProposalSchema,
   applicationReviewSchema,
   applicationSchema,
   changePasswordSchema,
   forcedPasswordChangeSchema,
-  checklistSchema,
   createUserSchema,
   leaseSchema,
   maintenanceSchema,
@@ -66,18 +75,36 @@ export async function submitApplication(formData: FormData) {
   const parsed = applicationSchema.safeParse({
     desiredUnitId: formData.get("desiredUnitId") || undefined,
     moveInDate: formData.get("moveInDate") || undefined,
+    rentTerm: formData.get("rentTerm") || "MONTHLY",
     employmentDetails,
     additionalNotes: formData.get("additionalNotes") || undefined,
   });
   if (!parsed.success) return { error: "Invalid application data." };
 
+  if (parsed.data.rentTerm === "ANNUALLY") {
+    return { error: "Annual rent is not available yet. Please choose monthly." };
+  }
+
+  const moveInDate = new Date(`${parsed.data.moveInDate}T12:00:00`);
+  const availability = await getUnitAvailabilityMaps();
+  if (
+    !isMoveInDateAvailable(
+      moveInDate,
+      parsed.data.desiredUnitId,
+      availability
+    )
+  ) {
+    return {
+      error: "The selected move-in month is no longer available for that unit.",
+    };
+  }
+
   const application = await db.application.create({
     data: {
       guestId: session.user.id,
       desiredUnitId: parsed.data.desiredUnitId,
-      moveInDate: parsed.data.moveInDate
-        ? new Date(parsed.data.moveInDate)
-        : undefined,
+      moveInDate,
+      rentTerm: parsed.data.rentTerm,
       employmentDetails: parsed.data.employmentDetails,
       additionalNotes: parsed.data.additionalNotes,
     },
@@ -85,6 +112,143 @@ export async function submitApplication(formData: FormData) {
   await dispatchPortalNotification(() =>
     notifyApplicationSubmitted(application.id)
   );
+  revalidatePortal();
+  return { success: true };
+}
+
+export async function proposeApplicationChanges(formData: FormData) {
+  await requireRole(["ADMIN", "STAFF"]);
+  const parsed = applicationProposalSchema.safeParse({
+    applicationId: formData.get("applicationId"),
+    proposedUnitId: formData.get("proposedUnitId"),
+    proposedMoveInDate: formData.get("proposedMoveInDate"),
+    proposedRentTerm: formData.get("proposedRentTerm") || "MONTHLY",
+    proposedMonthlyRent: formData.get("proposedMonthlyRent"),
+    proposalNotes: formData.get("proposalNotes") || undefined,
+    reviewNotes: formData.get("reviewNotes") || undefined,
+  });
+  if (!parsed.success) return { error: "Invalid lease proposal data." };
+
+  if (parsed.data.proposedRentTerm === "ANNUALLY") {
+    return { error: "Annual rent is not available yet." };
+  }
+
+  const application = await db.application.findUnique({
+    where: { id: parsed.data.applicationId },
+    include: {
+      guest: true,
+      desiredUnit: true,
+      proposedUnit: true,
+    },
+  });
+  if (!application) return { error: "Application not found." };
+  if (application.status === "APPROVED") {
+    return { error: "Approved applications cannot be changed." };
+  }
+
+  const unit = await db.unit.findUnique({
+    where: { id: parsed.data.proposedUnitId },
+  });
+  if (!unit) return { error: "Selected unit was not found." };
+
+  const moveInDate = new Date(`${parsed.data.proposedMoveInDate}T12:00:00`);
+  const availability = await getUnitAvailabilityMaps(application.id);
+  if (!isMoveInDateAvailable(moveInDate, parsed.data.proposedUnitId, availability)) {
+    return {
+      error: "The selected move-in month is booked for that unit.",
+    };
+  }
+
+  const token = generateProposalToken();
+  const updated = await db.application.update({
+    where: { id: application.id },
+    data: {
+      proposedUnitId: parsed.data.proposedUnitId,
+      proposedMoveInDate: moveInDate,
+      proposedRentTerm: parsed.data.proposedRentTerm,
+      proposedMonthlyRent: parsed.data.proposedMonthlyRent,
+      proposalStatus: "PENDING",
+      proposalNotes: parsed.data.proposalNotes,
+      proposalToken: token,
+      proposalTokenExpires: getProposalTokenExpiry(),
+      proposedAt: new Date(),
+      guestConfirmedAt: null,
+      reviewNotes: parsed.data.reviewNotes ?? application.reviewNotes,
+      status:
+        application.status === "SUBMITTED" ? "UNDER_REVIEW" : application.status,
+    },
+  });
+
+  await dispatchPortalNotification(() =>
+    notifyApplicationProposal(updated.id, token)
+  );
+  revalidatePortal();
+  return { success: true };
+}
+
+export async function confirmApplicationProposal(formData: FormData) {
+  const session = await requireRole("GUEST");
+  const token = String(formData.get("token") ?? "");
+  if (!token) return { error: "Invalid confirmation link." };
+
+  const application = await db.application.findFirst({
+    where: {
+      proposalToken: token,
+      guestId: session.user.id,
+      proposalStatus: "PENDING",
+    },
+    include: { proposedUnit: true },
+  });
+
+  if (!application) return { error: "This confirmation request was not found." };
+  if (
+    application.proposalTokenExpires &&
+    application.proposalTokenExpires < new Date()
+  ) {
+    return { error: "This confirmation link has expired." };
+  }
+
+  await db.application.update({
+    where: { id: application.id },
+    data: {
+      desiredUnitId: application.proposedUnitId,
+      moveInDate: application.proposedMoveInDate,
+      rentTerm: application.proposedRentTerm ?? "MONTHLY",
+      proposalStatus: "CONFIRMED",
+      guestConfirmedAt: new Date(),
+      proposalToken: null,
+      proposalTokenExpires: null,
+    },
+  });
+
+  revalidatePortal();
+  return { success: true };
+}
+
+export async function rejectApplicationProposal(formData: FormData) {
+  const session = await requireRole("GUEST");
+  const token = String(formData.get("token") ?? "");
+  if (!token) return { error: "Invalid confirmation link." };
+
+  const application = await db.application.findFirst({
+    where: {
+      proposalToken: token,
+      guestId: session.user.id,
+      proposalStatus: "PENDING",
+    },
+  });
+
+  if (!application) return { error: "This confirmation request was not found." };
+
+  await db.application.update({
+    where: { id: application.id },
+    data: {
+      proposalStatus: "REJECTED",
+      proposalToken: null,
+      proposalTokenExpires: null,
+    },
+  });
+
   revalidatePortal();
   return { success: true };
 }
@@ -103,12 +267,26 @@ export async function reviewApplication(formData: FormData) {
     include: {
       guest: true,
       desiredUnit: true,
+      proposedUnit: true,
     },
   });
   if (!existing) return { error: "Application not found." };
 
-  const becomingApproved =
-    parsed.data.status === "APPROVED" && existing.status !== "APPROVED";
+  if (existing.status === "APPROVED") {
+    return { error: "Approved applications cannot be changed." };
+  }
+
+  if (
+    parsed.data.status === "APPROVED" &&
+    existing.proposalStatus === "PENDING"
+  ) {
+    return {
+      error:
+        "The guest must confirm the proposed lease terms before you can approve.",
+    };
+  }
+
+  const becomingApproved = parsed.data.status === "APPROVED";
 
   if (becomingApproved) {
     const applicationForLease = {
@@ -117,11 +295,25 @@ export async function reviewApplication(formData: FormData) {
     };
 
     const result = await db.$transaction(async (tx) => {
+      const provisionResult = await provisionLeaseForApprovedApplication(
+        tx,
+        applicationForLease
+      );
+      if ("error" in provisionResult) {
+        throw new Error(provisionResult.error);
+      }
+
       await tx.application.update({
         where: { id },
         data: parsed.data,
       });
-      return provisionLeaseForApprovedApplication(tx, applicationForLease);
+
+      return provisionResult;
+    }).catch((error: unknown) => {
+      if (error instanceof Error) {
+        return { error: error.message } as const;
+      }
+      return { error: "Could not approve application." } as const;
     });
 
     if ("error" in result) {
@@ -599,27 +791,6 @@ export async function updatePortalSetting(formData: FormData) {
     details: key,
   });
 
-  revalidatePortal();
-  return { success: true };
-}
-
-export async function updateChecklist(formData: FormData) {
-  const session = await requireRole("RESIDENT");
-  const raw = formData.get("checklist");
-  if (!raw) return { error: "Missing checklist." };
-
-  let checklist: Record<string, boolean>;
-  try {
-    checklist = checklistSchema.parse(JSON.parse(String(raw)));
-  } catch {
-    return { error: "Invalid checklist." };
-  }
-
-  await db.residentProfile.upsert({
-    where: { userId: session.user.id },
-    create: { userId: session.user.id, checklistProgress: checklist },
-    update: { checklistProgress: checklist },
-  });
   revalidatePortal();
   return { success: true };
 }

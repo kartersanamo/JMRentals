@@ -1,5 +1,9 @@
 import { getDefaultChecklist } from "@/lib/portal/checklist";
-import type { Application, Prisma, Unit, User } from "@prisma/client";
+import {
+  getEffectiveApplicationTerms,
+  type ApplicationWithUnits,
+} from "@/lib/applications/effective";
+import type { Prisma, Unit, User } from "@prisma/client";
 
 type TransactionClient = Prisma.TransactionClient;
 
@@ -50,28 +54,42 @@ export async function provisionLease(
   return lease;
 }
 
-type ApplicationWithRelations = Application & {
+type ApplicationWithRelations = ApplicationWithUnits & {
   guest: User;
-  desiredUnit: Unit | null;
 };
 
 export function validateApplicationForAutoLease(
   application: ApplicationWithRelations
 ): { error: string } | { unit: Unit } {
-  if (!application.desiredUnitId || !application.desiredUnit) {
+  const terms = getEffectiveApplicationTerms(application);
+
+  if (!terms.unitId || !terms.unit) {
     return {
       error:
         "Cannot approve automatically: this application has no unit selected. Assign a lease manually from Residents or Leases & Billing.",
     };
   }
 
-  if (application.desiredUnit.status !== "AVAILABLE") {
+  if (terms.unit.status !== "AVAILABLE") {
     return {
-      error: `Cannot approve automatically: ${application.desiredUnit.name} is not available. Assign a different unit manually.`,
+      error: `Cannot approve automatically: ${terms.unit.name} is not available. Assign a different unit manually.`,
     };
   }
 
-  return { unit: application.desiredUnit };
+  if (!terms.moveInDate) {
+    return {
+      error:
+        "Cannot approve automatically: no move-in date is set. Propose lease terms and have the guest confirm first.",
+    };
+  }
+
+  if (terms.monthlyRent == null) {
+    return {
+      error: "Cannot approve automatically: monthly rent is missing.",
+    };
+  }
+
+  return { unit: terms.unit as Unit };
 }
 
 export async function provisionLeaseForApprovedApplication(
@@ -82,6 +100,8 @@ export async function provisionLeaseForApprovedApplication(
   if ("error" in validation) {
     return validation;
   }
+
+  const terms = getEffectiveApplicationTerms(application);
 
   const existingLease = await tx.lease.findFirst({
     where: {
@@ -101,14 +121,14 @@ export async function provisionLeaseForApprovedApplication(
   const lease = await provisionLease(tx, {
     residentId: application.guestId,
     unitId: validation.unit.id,
-    startDate: application.moveInDate ?? new Date(),
-    monthlyRent: Number(validation.unit.monthlyRent),
+    startDate: terms.moveInDate ?? new Date(),
+    monthlyRent: terms.monthlyRent ?? Number(validation.unit.monthlyRent),
   });
 
   return {
     leaseId: lease.id,
     unitName: validation.unit.name,
-    monthlyRent: Number(validation.unit.monthlyRent),
+    monthlyRent: terms.monthlyRent ?? Number(validation.unit.monthlyRent),
     residentId: application.guestId,
   };
 }
