@@ -37,3 +37,10 @@ export const checkoutSchema = z.object({
   paymentId: z.string().optional(),
   payAll: z.boolean().optional(),
 });
+
+export const adminStripeChargeSchema = z.object({
+  residentId: z.string().min(1),
+  description: z.string().min(1).max(200),
+  amount: z.coerce.number().positive(),
+  dueDate: z.string().min(1),
+});

@@ -6,12 +6,17 @@ import { db } from "@/lib/db";
 import {
   dispatchPortalNotification,
   notifyLeaseSigned,
+  notifyPaymentRecorded,
   notifyPaymentReceived,
 } from "@/lib/notifications/dispatch";
+import { ensureMonthlyRentCharges } from "@/lib/billing/rent-charges";
 import { createRentCheckoutSession } from "@/lib/payments/stripe-checkout";
+import { syncStripePaymentStatus } from "@/lib/payments/stripe-sync";
 import { isFeatureEnabled } from "@/lib/settings/store";
+import { isStripeConfigured } from "@/lib/stripe";
 import { saveUploadedFile, resolveStoredFilePath } from "@/lib/storage";
 import {
+  adminStripeChargeSchema,
   attachLeaseDocumentSchema,
   deleteDocumentSchema,
   documentUploadSchema,
@@ -49,7 +54,7 @@ export async function uploadDocument(formData: FormData) {
 
   try {
     const stored = await saveUploadedFile(file);
-    await db.document.create({
+    const document = await db.document.create({
       data: {
         title: parsed.data.title,
         category: parsed.data.category,
@@ -64,6 +69,28 @@ export async function uploadDocument(formData: FormData) {
         uploadedById: session.user.id,
       },
     });
+
+    if (parsed.data.leaseId && parsed.data.category === "LEASE") {
+      const lease = await db.lease.findUnique({
+        where: { id: parsed.data.leaseId },
+        select: { residentId: true, unitId: true },
+      });
+      if (lease) {
+        await db.$transaction([
+          db.document.update({
+            where: { id: document.id },
+            data: {
+              residentId: lease.residentId,
+              unitId: lease.unitId,
+            },
+          }),
+          db.lease.update({
+            where: { id: parsed.data.leaseId },
+            data: { leaseDocumentId: document.id },
+          }),
+        ]);
+      }
+    }
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Upload failed.",
@@ -270,41 +297,8 @@ export async function generateMonthlyRent(formData: FormData) {
   });
   if (!parsed.success) return { error: "Choose a billing month." };
 
-  const [year, month] = parsed.data.billingMonth.split("-").map(Number);
-  const dueDate = new Date(year, month - 1, 1);
-  const monthLabel = dueDate.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-
-  const leases = await db.lease.findMany({
-    where: { status: "ACTIVE" },
-    select: { id: true, residentId: true, monthlyRent: true },
-  });
-
-  let created = 0;
-  for (const lease of leases) {
-    const description = `${monthLabel} Rent`;
-    const existing = await db.paymentRecord.findFirst({
-      where: {
-        residentId: lease.residentId,
-        leaseId: lease.id,
-        description,
-      },
-    });
-    if (existing) continue;
-
-    await db.paymentRecord.create({
-      data: {
-        residentId: lease.residentId,
-        leaseId: lease.id,
-        amount: lease.monthlyRent,
-        dueDate,
-        description,
-      },
-    });
-    created += 1;
-  }
+  const created = await ensureMonthlyRentCharges(parsed.data.billingMonth);
+  const monthLabel = parsed.data.billingMonth;
 
   if (session.user.role === "ADMIN") {
     await createAuditLog({
@@ -316,6 +310,63 @@ export async function generateMonthlyRent(formData: FormData) {
 
   revalidatePortal();
   return { success: true, created };
+}
+
+export async function createAdminStripeCharge(formData: FormData) {
+  const session = await requireRole(["ADMIN", "STAFF"]);
+  if (!(await isFeatureEnabled("onlineRentPayments"))) {
+    return { error: "Online billing is currently disabled." };
+  }
+  if (!(await isStripeConfigured())) {
+    return { error: "Stripe is not configured." };
+  }
+
+  const parsed = adminStripeChargeSchema.safeParse({
+    residentId: formData.get("residentId"),
+    description: formData.get("description"),
+    amount: formData.get("amount"),
+    dueDate: formData.get("dueDate"),
+  });
+  if (!parsed.success) return { error: "Invalid charge details." };
+
+  const activeLease = await db.lease.findFirst({
+    where: {
+      residentId: parsed.data.residentId,
+      status: { in: ["PENDING", "ACTIVE"] },
+    },
+    select: { id: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const payment = await db.paymentRecord.create({
+    data: {
+      residentId: parsed.data.residentId,
+      leaseId: activeLease?.id,
+      amount: parsed.data.amount,
+      dueDate: new Date(parsed.data.dueDate),
+      description: parsed.data.description,
+    },
+  });
+
+  const checkout = await createRentCheckoutSession(parsed.data.residentId, [payment.id]);
+  if ("error" in checkout) {
+    await db.paymentRecord.delete({ where: { id: payment.id } });
+    return { error: checkout.error };
+  }
+
+  if (session.user.role === "ADMIN") {
+    await createAuditLog({
+      actorId: session.user.id,
+      action: "STRIPE_CHARGE_CREATED",
+      targetType: "User",
+      targetId: parsed.data.residentId,
+      details: `${parsed.data.description}: $${parsed.data.amount}`,
+    });
+  }
+
+  await dispatchPortalNotification(() => notifyPaymentRecorded(payment.id));
+  revalidatePortal();
+  return { success: true, url: checkout.url };
 }
 
 export async function markPaymentPaidManually(formData: FormData) {

@@ -74,9 +74,15 @@ export function DocumentUploadForm({
           </option>
         ))}
       </select>
-      <label className="flex items-center gap-2 text-sm text-navy">
-        <input type="checkbox" name="isGlobal" className="h-4 w-4 accent-gold" />
-        Visible to all residents
+      <label className="flex items-start gap-2 text-sm text-navy">
+        <input type="checkbox" name="isGlobal" className="h-4 w-4 accent-gold mt-0.5" />
+        <span>
+          Visible to all residents
+          <span className="block text-xs text-navy/60 mt-0.5">
+            Every current resident can see and download this document, not just the selected
+            resident or unit.
+          </span>
+        </span>
       </label>
       <input
         type="file"
