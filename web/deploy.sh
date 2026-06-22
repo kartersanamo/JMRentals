@@ -29,6 +29,12 @@ HOST_PORT=8004
 
 echo "Building ${IMAGE_TAG}..."
 docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
+
+if [[ -f .env ]] || [[ -f .env.local ]]; then
+  echo "Applying database migrations..."
+  npm run db:deploy
+fi
+
 docker build -t "${IMAGE_TAG}" \
   --build-arg "NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=${NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN:-}" \
   --build-arg "NEXT_PUBLIC_MAPBOX_STYLE=${NEXT_PUBLIC_MAPBOX_STYLE:-mapbox://styles/mapbox/streets-v12}" \
