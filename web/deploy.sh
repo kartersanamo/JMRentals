@@ -48,11 +48,17 @@ elif [[ -f .env.local ]]; then
   ENV_FILE_ARGS=(--env-file .env.local)
 fi
 
+CACHE_FROM_ARGS=()
+if docker image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
+  CACHE_FROM_ARGS=(--cache-from "${IMAGE_TAG}")
+fi
+
 echo "Building ${IMAGE_TAG} (BuildKit cache enabled)..."
 docker build -t "${IMAGE_TAG}" \
   --build-arg "NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=${NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN:-}" \
   --build-arg "NEXT_PUBLIC_MAPBOX_STYLE=${NEXT_PUBLIC_MAPBOX_STYLE:-mapbox://styles/mapbox/streets-v12}" \
   --build-arg "NEXT_PUBLIC_SITE_URL=${SITE_URL}" \
+  "${CACHE_FROM_ARGS[@]}" \
   .
 
 if [[ -f .env ]] || [[ -f .env.local ]]; then

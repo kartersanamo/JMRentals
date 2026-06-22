@@ -2,6 +2,7 @@ node_modules
 .next
 .git
 .cursor
+.github
 *.md
 .env
 .env*.local
@@ -9,3 +10,8 @@ npm-debug.log*
 .DS_Store
 coverage
 data
+deploy.sh
+Dockerfile
+scripts
+README.md
+eslint.config.mjs
