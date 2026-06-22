@@ -2,8 +2,8 @@ import { site } from "@/lib/site-config";
 import Image from "next/image";
 import Link from "next/link";
 
-export const SITE_FAVICON_SRC = "/images/Logo_NoWords_NoBG.png";
-export const SITE_LOGO_SRC = "/images/Logo_NoWords_WhiteBG.png";
+export const SITE_FAVICON_SRC = "/images/Logo_NoWords_NoBG_White.png";
+export const SITE_LOGO_SRC = "/images/Logo_NoWords_NoBG_White.png";
 
 const sizes = {
   xs: { width: 32, height: 32, className: "h-8 w-8" },

@@ -30,7 +30,9 @@ export function ErrorScreen({
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-lg text-center">
         <div className="flex justify-center mb-6">
-          <SiteLogo size="md" linked />
+          <div className="inline-flex rounded-lg bg-navy p-3">
+            <SiteLogo size="md" linked />
+          </div>
         </div>
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gold/15 text-gold">
           <AlertCircle className="h-8 w-8" aria-hidden />
