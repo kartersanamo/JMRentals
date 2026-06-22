@@ -171,6 +171,47 @@ export async function updatePortalSettingJson(formData: FormData) {
   return { success: true };
 }
 
+export async function updateSiteGallery(formData: FormData) {
+  const session = await requireRole("ADMIN");
+  const current = await getSiteContent();
+  const raw = String(formData.get("galleryJson") ?? "");
+
+  let parsedGallery: SiteContent["gallery"];
+  try {
+    parsedGallery = JSON.parse(raw);
+  } catch {
+    return { error: "Invalid gallery data." };
+  }
+
+  if (!Array.isArray(parsedGallery)) {
+    return { error: "Gallery must be a list of photos." };
+  }
+
+  const gallery = parsedGallery
+    .map((item) => ({
+      src: String(item?.src ?? "").trim(),
+      category: item?.category === "outside" ? "outside" : "inside",
+      alt: String(item?.alt ?? "").trim(),
+    }))
+    .filter((item) => item.src && item.alt) as SiteContent["gallery"];
+
+  if (gallery.length === 0) {
+    return { error: "Add at least one gallery photo with a URL and alt text." };
+  }
+
+  await saveSiteContent({ ...current, gallery });
+
+  await createAuditLog({
+    actorId: session.user.id,
+    action: "SITE_GALLERY_UPDATED",
+    targetType: "PortalSetting",
+    details: `${gallery.length} photo(s)`,
+  });
+
+  revalidateAll();
+  return { success: true };
+}
+
 export async function resetSystemConfigDefaults() {
   const session = await requireRole("ADMIN");
   await saveSystemConfig(DEFAULT_SYSTEM_CONFIG);

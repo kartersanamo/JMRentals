@@ -1,4 +1,5 @@
 import { ActionForm } from "@/components/portal/ActionForm";
+import { UnitImageUrlField } from "@/components/admin/UnitImageUrlField";
 import {
   PortalCard,
   PortalPageHeader,
@@ -6,7 +7,9 @@ import {
 } from "@/components/portal/PortalCard";
 import { upsertUnit } from "@/lib/actions/portal";
 import { db } from "@/lib/db";
+import { getSiteContent } from "@/lib/settings/store";
 import { getUnitImageAlt, getUnitImageUrl } from "@/lib/unit-images";
+import type { SiteGalleryImage } from "@/lib/settings/types";
 import type { Unit } from "@prisma/client";
 import Image from "next/image";
 
@@ -40,10 +43,12 @@ function UnitField({
 function UnitFormFields({
   unit,
   idPrefix,
+  galleryImages,
   compact = false,
 }: {
   unit?: Unit;
   idPrefix: string;
+  galleryImages: SiteGalleryImage[];
   compact?: boolean;
 }) {
   const fc = compact ? fieldClassSm : fieldClass;
@@ -114,16 +119,12 @@ function UnitFormFields({
           className={fc}
         />
       </UnitField>
-      <UnitField label="Photo URL" htmlFor={`${idPrefix}-image`}>
-        <input
-          id={`${idPrefix}-image`}
-          name="imageUrl"
-          type="url"
-          defaultValue={unit?.imageUrl ?? ""}
-          placeholder="/images/Inside1.jpg"
-          className={fc}
-        />
-      </UnitField>
+      <UnitImageUrlField
+        idPrefix={idPrefix}
+        defaultValue={unit?.imageUrl ?? ""}
+        galleryImages={galleryImages}
+        compact={compact}
+      />
       <UnitField
         label="Description"
         htmlFor={`${idPrefix}-description`}
@@ -144,7 +145,11 @@ function UnitFormFields({
 }
 
 export default async function AdminUnitsPage() {
-  const units = await db.unit.findMany({ orderBy: { name: "asc" } });
+  const [units, siteContent] = await Promise.all([
+    db.unit.findMany({ orderBy: { name: "asc" } }),
+    getSiteContent(),
+  ]);
+  const galleryImages = siteContent.gallery;
 
   return (
     <div>
@@ -156,7 +161,7 @@ export default async function AdminUnitsPage() {
           submitLabel="Add unit"
           className="grid sm:grid-cols-2 gap-4"
         >
-          <UnitFormFields idPrefix="new" />
+          <UnitFormFields idPrefix="new" galleryImages={galleryImages} />
         </ActionForm>
       </PortalCard>
       <PortalCard title="All Units">
@@ -190,7 +195,12 @@ export default async function AdminUnitsPage() {
                 className="grid sm:grid-cols-2 gap-4"
               >
                 <input type="hidden" name="id" value={u.id} />
-                <UnitFormFields idPrefix={u.id} unit={u} compact />
+                <UnitFormFields
+                  idPrefix={u.id}
+                  unit={u}
+                  galleryImages={galleryImages}
+                  compact
+                />
               </ActionForm>
             </li>
           ))}

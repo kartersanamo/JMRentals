@@ -1,6 +1,8 @@
 "use client";
 
 import { ActionForm } from "@/components/portal/ActionForm";
+import { GalleryManager } from "@/components/admin/GalleryManager";
+import { ImageUrlPicker } from "@/components/admin/ImageUrlPicker";
 import {
   resetSiteContentDefaults,
   resetSystemConfigDefaults,
@@ -276,7 +278,15 @@ export function AdminCommandCenter({
               <Field label="ZIP" name="zip" defaultValue={siteContent.address.zip} />
               <Field label="Latitude" name="lat" type="number" step="any" defaultValue={String(siteContent.coordinates.lat)} />
               <Field label="Longitude" name="lng" type="number" step="any" defaultValue={String(siteContent.coordinates.lng)} />
-              <Field label="Hero image URL" name="heroImage" defaultValue={siteContent.heroImage} className="sm:col-span-2" />
+              <div className="sm:col-span-2">
+                <ImageUrlPicker
+                  name="heroImage"
+                  label="Hero image"
+                  defaultValue={siteContent.heroImage}
+                  galleryImages={siteContent.gallery}
+                  inputClassName={fieldClass}
+                />
+              </div>
               <Field label="Facebook URL" name="facebook" defaultValue={siteContent.social.facebook} className="sm:col-span-2" />
               <Field label="Terms last updated" name="termsLastUpdated" defaultValue={siteContent.termsLastUpdated} />
               <Field label="Privacy last updated" name="privacyLastUpdated" defaultValue={siteContent.privacyLastUpdated} />
@@ -289,6 +299,14 @@ export function AdminCommandCenter({
             >
               <span className="sr-only">Reset</span>
             </ActionForm>
+          </section>
+
+          <section className="bg-white border border-navy/10 p-6">
+            <h2 className="font-display text-2xl text-navy mb-2">Photo gallery</h2>
+            <p className="text-sm text-navy/60 mb-6">
+              Manage photos for the public gallery and preset image pickers across the admin site.
+            </p>
+            <GalleryManager initialGallery={siteContent.gallery} />
           </section>
 
           <section className="bg-white border border-navy/10 p-6">
