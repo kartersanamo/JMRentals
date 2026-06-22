@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailFieldSchema, optionalPhoneFieldSchema } from "@/lib/validators/fields";
 
 export const contactSchema = z.object({
   firstName: z
@@ -9,8 +10,8 @@ export const contactSchema = z.object({
     .string()
     .min(1, "Last name is required")
     .max(80, "Last name is too long"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z.string().max(30).optional().or(z.literal("")),
+  email: emailFieldSchema,
+  phone: optionalPhoneFieldSchema,
   message: z
     .string()
     .min(10, "Message must be at least 10 characters")

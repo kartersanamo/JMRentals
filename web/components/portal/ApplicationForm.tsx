@@ -2,6 +2,7 @@
 
 import { ActionForm } from "@/components/portal/ActionForm";
 import { Button } from "@/components/ui/Button";
+import { PhoneField } from "@/components/ui/PhoneField";
 import { submitApplication } from "@/lib/actions/portal";
 import type { PreviousJob } from "@/lib/validators/portal";
 import { employmentDetailsSchema } from "@/lib/validators/portal";
@@ -220,17 +221,18 @@ export function ApplicationForm({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="employerPhone" className={labelClass}>
-              Employer Phone
-            </label>
-            <input
+            <PhoneField
               id="employerPhone"
-              type="tel"
+              label="Employer Phone"
               value={employerPhone}
-              onChange={(e) => setEmployerPhone(e.target.value)}
-              className={fieldClass}
-              placeholder="Optional"
+              onChange={setEmployerPhone}
+              inputClassName={fieldClass}
             />
+            {errorFor("employerPhone") && (
+              <p className="mt-1 text-xs text-red-700">
+                {errorFor("employerPhone")}
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="supervisorName" className={labelClass}>

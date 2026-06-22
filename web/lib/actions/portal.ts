@@ -193,6 +193,7 @@ export async function createUserAccount(formData: FormData) {
   const parsed = createUserSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     phone: formData.get("phone") || undefined,
@@ -350,6 +351,7 @@ export async function changePassword(formData: FormData) {
 
     revalidatePortal();
     await signOut({ redirectTo: "/login?passwordUpdated=1" });
+    return { success: true };
   }
 
   const parsed = changePasswordSchema.safeParse({

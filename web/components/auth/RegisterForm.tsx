@@ -1,6 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { EmailField } from "@/components/ui/EmailField";
+import { PasswordFields } from "@/components/ui/PasswordFields";
+import { PhoneField } from "@/components/ui/PhoneField";
 import { registerSchema } from "@/lib/validators/portal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -9,7 +12,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 
-type RegisterForm = z.infer<typeof registerSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const router = useRouter();
@@ -18,17 +21,33 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterForm>({
+  } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
-  const onSubmit = async (data: RegisterForm) => {
+  const email = watch("email") ?? "";
+  const phone = watch("phone") ?? "";
+  const password = watch("password") ?? "";
+  const confirmPassword = watch("confirmPassword") ?? "";
+
+  const onSubmit = async (data: RegisterFormValues) => {
     setError("");
+    const { confirmPassword: _confirmPassword, ...payload } = data;
     const res = await fetch("/api/portal/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     const json = await res.json();
     if (!res.ok) {
@@ -74,47 +93,38 @@ export function RegisterForm() {
           </div>
         </div>
 
-        <div>
-          <label htmlFor="email" className="block text-xs uppercase tracking-widest text-navy/70 mb-2">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            {...register("email")}
-            className="w-full border border-navy/20 bg-white px-4 py-3 text-navy focus:outline-none focus:border-gold"
-          />
-          {errors.email && (
-            <p className="mt-1 text-xs text-red-700">{errors.email.message}</p>
-          )}
-        </div>
+        <EmailField
+          value={email}
+          onChange={(value) =>
+            setValue("email", value, { shouldValidate: true, shouldDirty: true })
+          }
+          error={errors.email?.message}
+          required
+        />
 
-        <div>
-          <label htmlFor="phone" className="block text-xs uppercase tracking-widest text-navy/70 mb-2">
-            Phone (optional)
-          </label>
-          <input
-            id="phone"
-            type="tel"
-            {...register("phone")}
-            className="w-full border border-navy/20 bg-white px-4 py-3 text-navy focus:outline-none focus:border-gold"
-          />
-        </div>
+        <PhoneField
+          value={phone}
+          onChange={(value) =>
+            setValue("phone", value, { shouldValidate: true, shouldDirty: true })
+          }
+          error={errors.phone?.message}
+        />
 
-        <div>
-          <label htmlFor="password" className="block text-xs uppercase tracking-widest text-navy/70 mb-2">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            {...register("password")}
-            className="w-full border border-navy/20 bg-white px-4 py-3 text-navy focus:outline-none focus:border-gold"
-          />
-          {errors.password && (
-            <p className="mt-1 text-xs text-red-700">{errors.password.message}</p>
-          )}
-        </div>
+        <PasswordFields
+          password={password}
+          confirmPassword={confirmPassword}
+          onPasswordChange={(value) =>
+            setValue("password", value, { shouldValidate: true, shouldDirty: true })
+          }
+          onConfirmPasswordChange={(value) =>
+            setValue("confirmPassword", value, {
+              shouldValidate: true,
+              shouldDirty: true,
+            })
+          }
+          passwordError={errors.password?.message}
+          confirmError={errors.confirmPassword?.message}
+        />
 
         {error && (
           <p className="text-sm text-red-700 bg-red-50 p-3">{error}</p>

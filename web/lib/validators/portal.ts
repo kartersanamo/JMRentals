@@ -1,18 +1,29 @@
 import { z } from "zod";
+import {
+  emailFieldSchema,
+  newPasswordsMatchRefine,
+  optionalPhoneFieldSchema,
+  passwordMatchMessage,
+  passwordsMatchRefine,
+  strongPasswordSchema,
+} from "@/lib/validators/fields";
 
-export const registerSchema = z.object({
-  email: z.string().email("Valid email required"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(128),
-  firstName: z.string().min(1, "First name required").max(80),
-  lastName: z.string().min(1, "Last name required").max(80),
-  phone: z.string().max(30).optional(),
-});
+export const registerSchema = z
+  .object({
+    email: emailFieldSchema,
+    password: strongPasswordSchema,
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+    firstName: z.string().min(1, "First name required").max(80),
+    lastName: z.string().min(1, "Last name required").max(80),
+    phone: optionalPhoneFieldSchema,
+  })
+  .refine((data) => passwordsMatchRefine(data), {
+    message: passwordMatchMessage,
+    path: ["confirmPassword"],
+  });
 
 export const verifyEmailSchema = z.object({
-  email: z.string().email("Valid email required"),
+  email: emailFieldSchema,
   code: z
     .string()
     .length(6, "Enter the 6-digit code")
@@ -20,12 +31,12 @@ export const verifyEmailSchema = z.object({
 });
 
 export const resendVerificationSchema = z.object({
-  email: z.string().email("Valid email required"),
+  email: emailFieldSchema,
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: emailFieldSchema,
+  password: z.string().min(1, "Password is required"),
 });
 
 export const previousJobSchema = z.object({
@@ -42,7 +53,7 @@ export const employmentDetailsSchema = z.object({
   yearlyIncome: z.coerce
     .number({ invalid_type_error: "Enter a valid yearly income" })
     .positive("Yearly income must be greater than zero"),
-  employerPhone: z.string().max(30).optional(),
+  employerPhone: optionalPhoneFieldSchema,
   supervisorName: z.string().max(120).optional(),
   previousJobs: z.array(previousJobSchema).max(10),
 });
@@ -63,41 +74,47 @@ export const maintenanceSchema = z.object({
 export const profileSchema = z.object({
   firstName: z.string().min(1).max(80),
   lastName: z.string().min(1).max(80),
-  phone: z.string().max(30).optional(),
+  phone: optionalPhoneFieldSchema,
   emergencyName: z.string().max(120).optional(),
-  emergencyPhone: z.string().max(30).optional(),
+  emergencyPhone: optionalPhoneFieldSchema,
   vehicles: z.string().max(500).optional(),
 });
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1),
-    newPassword: z.string().min(8).max(128),
-    confirmPassword: z.string().min(8).max(128),
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: strongPasswordSchema,
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
   })
-  .refine((d) => d.newPassword === d.confirmPassword, {
-    message: "Passwords do not match",
+  .refine((data) => newPasswordsMatchRefine(data), {
+    message: passwordMatchMessage,
     path: ["confirmPassword"],
   });
 
 export const forcedPasswordChangeSchema = z
   .object({
-    newPassword: z.string().min(8).max(128),
-    confirmPassword: z.string().min(8).max(128),
+    newPassword: strongPasswordSchema,
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
   })
-  .refine((d) => d.newPassword === d.confirmPassword, {
-    message: "Passwords do not match",
+  .refine((data) => newPasswordsMatchRefine(data), {
+    message: passwordMatchMessage,
     path: ["confirmPassword"],
   });
 
-export const createUserSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8).max(128),
-  firstName: z.string().min(1).max(80),
-  lastName: z.string().min(1).max(80),
-  phone: z.string().max(30).optional(),
-  role: z.enum(["ADMIN", "STAFF", "RESIDENT", "GUEST"]),
-});
+export const createUserSchema = z
+  .object({
+    email: emailFieldSchema,
+    password: strongPasswordSchema,
+    confirmPassword: z.string().min(1, "Please confirm the password"),
+    firstName: z.string().min(1).max(80),
+    lastName: z.string().min(1).max(80),
+    phone: optionalPhoneFieldSchema,
+    role: z.enum(["ADMIN", "STAFF", "RESIDENT", "GUEST"]),
+  })
+  .refine((data) => passwordsMatchRefine(data), {
+    message: passwordMatchMessage,
+    path: ["confirmPassword"],
+  });
 
 export const unitSchema = z.object({
   name: z.string().min(1).max(120),

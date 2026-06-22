@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { EmailField } from "@/components/ui/EmailField";
 import { loginSchema } from "@/lib/validators/portal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
@@ -10,7 +11,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 
-type LoginForm = z.infer<typeof loginSchema>;
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
@@ -23,12 +24,17 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({
+  } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = async (data: LoginForm) => {
+  const email = watch("email") ?? "";
+
+  const onSubmit = async (data: LoginFormValues) => {
     setError("");
     const result = await signIn("credentials", {
       email: data.email.toLowerCase(),
@@ -65,21 +71,14 @@ export function LoginForm() {
         </p>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        <div>
-          <label htmlFor="email" className="block text-xs uppercase tracking-widest text-navy/70 mb-2">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            {...register("email")}
-            className="w-full border border-navy/20 bg-white px-4 py-3 text-navy focus:outline-none focus:border-gold"
-          />
-          {errors.email && (
-            <p className="mt-1 text-xs text-red-700">{errors.email.message}</p>
-          )}
-        </div>
+        <EmailField
+          value={email}
+          onChange={(value) =>
+            setValue("email", value, { shouldValidate: true, shouldDirty: true })
+          }
+          error={errors.email?.message}
+          required
+        />
 
         <div>
           <label htmlFor="password" className="block text-xs uppercase tracking-widest text-navy/70 mb-2">

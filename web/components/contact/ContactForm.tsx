@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { EmailField } from "@/components/ui/EmailField";
+import { PhoneField } from "@/components/ui/PhoneField";
 import { contactSchema, type ContactFormData } from "@/lib/validators/contact";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, Loader2, AlertCircle } from "lucide-react";
@@ -18,6 +20,7 @@ export function ContactForm() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -32,6 +35,10 @@ export function ContactForm() {
   });
 
   const messageLength = watch("message")?.length ?? 0;
+  const email = watch("email") ?? "";
+  const phone = watch("phone") ?? "";
+  const contactInputClass =
+    "w-full border border-navy/20 bg-cream px-4 py-3 text-navy focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold";
 
   const onSubmit = async (data: ContactFormData) => {
     setStatus("loading");
@@ -112,34 +119,26 @@ export function ContactForm() {
         </div>
       </div>
 
-      <div>
-        <label htmlFor="email" className="block text-xs uppercase tracking-widest text-navy/70 mb-2">
-          Email Address <span className="text-gold">*</span>
-        </label>
-        <input
-          id="email"
-          type="email"
-          {...register("email")}
-          className="w-full border border-navy/20 bg-cream px-4 py-3 text-navy focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
-          autoComplete="email"
-        />
-        {errors.email && (
-          <p className="mt-1 text-xs text-red-700">{errors.email.message}</p>
-        )}
-      </div>
+      <EmailField
+        value={email}
+        onChange={(value) =>
+          setValue("email", value, { shouldValidate: true, shouldDirty: true })
+        }
+        label="Email Address"
+        required
+        error={errors.email?.message}
+        inputClassName={contactInputClass}
+      />
 
-      <div>
-        <label htmlFor="phone" className="block text-xs uppercase tracking-widest text-navy/70 mb-2">
-          Phone Number
-        </label>
-        <input
-          id="phone"
-          type="tel"
-          {...register("phone")}
-          className="w-full border border-navy/20 bg-cream px-4 py-3 text-navy focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
-          autoComplete="tel"
-        />
-      </div>
+      <PhoneField
+        value={phone}
+        onChange={(value) =>
+          setValue("phone", value, { shouldValidate: true, shouldDirty: true })
+        }
+        label="Phone Number"
+        error={errors.phone?.message}
+        inputClassName={contactInputClass}
+      />
 
       <div>
         <label htmlFor="message" className="block text-xs uppercase tracking-widest text-navy/70 mb-2">

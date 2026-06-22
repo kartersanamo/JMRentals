@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { EmailField } from "@/components/ui/EmailField";
 import { verifyEmailSchema } from "@/lib/validators/portal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -23,6 +24,8 @@ function VerifyEmailForm() {
     register,
     handleSubmit,
     getValues,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<VerifyForm>({
     resolver: zodResolver(verifyEmailSchema),
@@ -31,6 +34,8 @@ function VerifyEmailForm() {
       code: "",
     },
   });
+
+  const email = watch("email") ?? "";
 
   const onSubmit = async (data: VerifyForm) => {
     setError("");
@@ -81,24 +86,14 @@ function VerifyEmailForm() {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-xs uppercase tracking-widest text-navy/70 mb-2"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            {...register("email")}
-            className="w-full border border-navy/20 bg-white px-4 py-3 text-navy focus:outline-none focus:border-gold"
-          />
-          {errors.email && (
-            <p className="mt-1 text-xs text-red-700">{errors.email.message}</p>
-          )}
-        </div>
+        <EmailField
+          value={email}
+          onChange={(value) =>
+            setValue("email", value, { shouldValidate: true, shouldDirty: true })
+          }
+          error={errors.email?.message}
+          required
+        />
 
         <div>
           <label
