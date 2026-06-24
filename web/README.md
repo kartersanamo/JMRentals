@@ -67,7 +67,7 @@ For Docker deployments, use `127.0.0.1` as the database host (the container runs
 | `NEXT_PUBLIC_SITE_URL` | Production | Canonical site URL |
 | `MAILGUN_*` | Contact form | Mailgun credentials |
 | `UPLOAD_DIR` | Portal | Upload storage path (Docker: `/app/data/uploads`, mounted by `deploy.sh`) |
-| `UPLOAD_DIR_HOST` | Deploy | Host path for upload volume (default `/var/lib/jm-rentals/uploads`) |
+| `UPLOAD_DIR_HOST` | Deploy | Host upload path (default: `web/data/uploads`; `/var/lib/...` needs sudo) |
 | `MAILGUN_INBOUND_ENABLED` | No | Set `true` only after Mailgun MX + inbound route are configured |
 
 ## Portal Scripts
@@ -96,7 +96,7 @@ npm run db:deploy && npm run db:seed   # first time only
 ./deploy.sh
 ```
 
-`deploy.sh` runs with `--network host`, mounts `${UPLOAD_DIR_HOST:-/var/lib/jm-rentals/uploads}` for persistent uploads, and applies database migrations on the host before starting the container.
+`deploy.sh` runs with `--network host`, mounts `UPLOAD_DIR_HOST` (default `web/data/uploads`) for persistent uploads, and applies database migrations on the host before starting the container.
 
 ## Launch Checklist
 

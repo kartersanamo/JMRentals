@@ -40,8 +40,14 @@ SITE_URL="${NEXT_PUBLIC_SITE_URL:-https://jm.kartersanamo.com}"
 CONTAINER_NAME="jm-rentals"
 IMAGE_TAG="jm-rentals:latest"
 HOST_PORT=8004
-UPLOAD_DIR_HOST="${UPLOAD_DIR_HOST:-/var/lib/jm-rentals/uploads}"
 UPLOAD_DIR_CONTAINER="/app/data/uploads"
+DEPLOY_ROOT="$(cd "$(dirname "$0")" && pwd)"
+UPLOAD_DIR_HOST="$(read_env_var UPLOAD_DIR_HOST || true)"
+if [[ -z "${UPLOAD_DIR_HOST}" ]]; then
+  UPLOAD_DIR_HOST="${DEPLOY_ROOT}/data/uploads"
+elif [[ "${UPLOAD_DIR_HOST}" != /* ]]; then
+  UPLOAD_DIR_HOST="${DEPLOY_ROOT}/${UPLOAD_DIR_HOST#./}"
+fi
 
 ENV_FILE_ARGS=()
 if [[ -f .env ]]; then
@@ -73,7 +79,13 @@ if [[ -f .env ]] || [[ -f .env.local ]]; then
   fi
 fi
 
-mkdir -p "${UPLOAD_DIR_HOST}"
+mkdir -p "${UPLOAD_DIR_HOST}" || {
+  echo "ERROR: Could not create upload directory: ${UPLOAD_DIR_HOST}" >&2
+  echo "Set UPLOAD_DIR_HOST in .env to a writable path (e.g. data/uploads), or create /var/lib/jm-rentals with sudo." >&2
+  exit 1
+}
+
+echo "Upload volume: ${UPLOAD_DIR_HOST} -> ${UPLOAD_DIR_CONTAINER}"
 
 echo "Replacing container..."
 docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
