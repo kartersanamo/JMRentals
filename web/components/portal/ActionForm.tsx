@@ -43,6 +43,7 @@ export function ActionForm({
       {children}
       {error && (
         <p
+          role="alert"
           className={
             compact
               ? "text-xs text-red-700 w-full"

@@ -3,6 +3,7 @@ import { auth, signOut } from "@/lib/auth";
 import { SiteLogo } from "@/components/brand/SiteLogo";
 import { db } from "@/lib/db";
 import { getPortalNav } from "@/lib/portal-nav";
+import { getSystemConfig, isFeatureEnabled } from "@/lib/settings/store";
 import { LogOut } from "lucide-react";
 import { redirect } from "next/navigation";
 import { PortalSidebar } from "./PortalSidebar";
@@ -24,10 +25,26 @@ export async function PortalShell({ children }: { children: React.ReactNode }) {
     redirect("/login?reason=role_updated");
   }
 
-  const nav = getPortalNav(session.user.role);
+  const [config, messagesEnabled] = await Promise.all([
+    getSystemConfig(),
+    isFeatureEnabled("portalMessages"),
+  ]);
+
+  const nav = getPortalNav(session.user.role).filter((item) => {
+    if (item.href.includes("/messages") && !messagesEnabled) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-cream flex flex-col">
+      <a
+        href="#portal-main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:bg-gold focus:text-navy focus:px-4 focus:py-2"
+      >
+        Skip to portal content
+      </a>
       <div className="flex flex-1 min-h-0">
         <PortalSidebar nav={nav} user={session.user} />
         <div className="flex-1 flex flex-col min-w-0">
@@ -53,10 +70,12 @@ export async function PortalShell({ children }: { children: React.ReactNode }) {
               </button>
             </form>
           </header>
-          <div className="flex-1 p-4 md:p-8 overflow-auto">{children}</div>
+          <div id="portal-main" className="flex-1 p-4 md:p-8 overflow-auto">
+            {children}
+          </div>
         </div>
       </div>
-      <Footer />
+      <Footer showBooking={config.features.onlineBookingPage} />
     </div>
   );
 }

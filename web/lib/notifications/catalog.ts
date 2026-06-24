@@ -4,6 +4,7 @@ export type NotificationKey =
   | "application_submitted"
   | "application_status_changed"
   | "application_proposal"
+  | "application_proposal_declined"
   | "maintenance_submitted"
   | "maintenance_status_changed"
   | "portal_message_to_staff"
@@ -54,6 +55,14 @@ export const NOTIFICATION_CATALOG: NotificationDefinition[] = [
     label: "Lease term proposals",
     description: "When staff proposes lease changes for you to confirm",
     roles: ["GUEST"],
+    defaultEnabled: true,
+  },
+  {
+    key: "application_proposal_declined",
+    category: "applications",
+    label: "Declined lease proposals",
+    description: "When a guest declines proposed lease terms",
+    roles: ["ADMIN", "STAFF"],
     defaultEnabled: true,
   },
   {

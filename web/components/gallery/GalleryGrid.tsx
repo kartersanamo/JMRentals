@@ -1,11 +1,16 @@
 "use client";
 
 import { AnimateIn } from "@/components/ui/AnimateIn";
-import { Lightbox } from "@/components/gallery/Lightbox";
 import type { GalleryImage } from "@/lib/site-config";
 import type { SiteGalleryCategory } from "@/lib/settings/types";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useMemo, useState } from "react";
+
+const Lightbox = dynamic(
+  () => import("@/components/gallery/Lightbox").then((mod) => mod.Lightbox),
+  { ssr: false }
+);
 
 type Filter = "all" | string;
 
@@ -53,6 +58,14 @@ export function GalleryGrid({
     ];
   }, [categories, images]);
 
+  if (!preview && images.length === 0) {
+    return (
+      <p className="text-center text-navy/60 py-16">
+        No gallery images yet. Check back soon.
+      </p>
+    );
+  }
+
   return (
     <>
       {!preview && filters.length > 1 && (
@@ -62,6 +75,7 @@ export function GalleryGrid({
               key={f.value}
               type="button"
               onClick={() => setFilter(f.value)}
+              aria-pressed={filter === f.value}
               className={`px-6 py-2 text-sm uppercase tracking-widest transition-all ${
                 filter === f.value
                   ? "bg-navy text-cream"

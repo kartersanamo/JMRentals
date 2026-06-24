@@ -16,6 +16,7 @@ import {
   dispatchPortalNotification,
   notifyAnnouncementPosted,
   notifyApplicationProposal,
+  notifyApplicationProposalDeclined,
   notifyApplicationApprovedWithLease,
   notifyApplicationStatusChanged,
   notifyApplicationSubmitted,
@@ -33,7 +34,6 @@ import {
 } from "@/lib/notifications/catalog";
 import { isFeatureEnabled } from "@/lib/settings/store";
 import { hashPassword, verifyPassword } from "@/lib/password";
-import { getDefaultChecklist } from "@/lib/portal/checklist";
 import {
   provisionLease,
   provisionLeaseForApprovedApplication,
@@ -249,6 +249,10 @@ export async function rejectApplicationProposal(formData: FormData) {
     },
   });
 
+  await dispatchPortalNotification(() =>
+    notifyApplicationProposalDeclined(application.id)
+  );
+
   revalidatePortal();
   return { success: true };
 }
@@ -437,9 +441,7 @@ export async function createUserAccount(formData: FormData) {
       mustChangePassword: true,
       emailVerifiedAt: new Date(),
       residentProfile:
-        parsed.data.role === "RESIDENT"
-          ? { create: { checklistProgress: await getDefaultChecklist() } }
-          : undefined,
+        parsed.data.role === "RESIDENT" ? { create: {} } : undefined,
     },
   });
 
@@ -673,7 +675,27 @@ export async function sendMessage(formData: FormData) {
   if (!parsed.success) return { error: "Invalid message." };
 
   let threadId = parsed.data.threadId;
-  if (!threadId) {
+
+  if (threadId) {
+    const thread = await db.messageThread.findUnique({
+      where: { id: threadId },
+      select: { id: true, participantId: true },
+    });
+    if (!thread) return { error: "Conversation not found." };
+
+    const isParticipant = thread.participantId === session.user.id;
+    const isStaff =
+      session.user.role === "ADMIN" || session.user.role === "STAFF";
+
+    if (!isParticipant && !isStaff) {
+      return { error: "You cannot reply to this conversation." };
+    }
+  } else if (
+    session.user.role !== "GUEST" &&
+    session.user.role !== "RESIDENT"
+  ) {
+    return { error: "Select a conversation to reply." };
+  } else {
     const thread = await db.messageThread.create({
       data: {
         participantId: session.user.id,
@@ -681,6 +703,10 @@ export async function sendMessage(formData: FormData) {
       },
     });
     threadId = thread.id;
+  }
+
+  if (!threadId) {
+    return { error: "Invalid message." };
   }
 
   const message = await db.message.create({
@@ -805,7 +831,7 @@ export async function changeUserRole(formData: FormData) {
   if (role === "RESIDENT") {
     await db.residentProfile.upsert({
       where: { userId: id },
-      create: { userId: id, checklistProgress: await getDefaultChecklist() },
+      create: { userId: id },
       update: {},
     });
   }

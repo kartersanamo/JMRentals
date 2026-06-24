@@ -30,7 +30,6 @@ export default async function AdminSettingsPage() {
   ]);
 
   const homeInfo = portalSettings.find((s) => s.key === "home_info");
-  const checklist = portalSettings.find((s) => s.key === "default_checklist");
 
   return (
     <div>
@@ -45,7 +44,6 @@ export default async function AdminSettingsPage() {
         stats={stats}
         auditLogs={auditLogs}
         homeInfoJson={prettyJsonString(homeInfo?.value, "{}")}
-        checklistJson={prettyJsonString(checklist?.value, "{}")}
       />
     </div>
   );

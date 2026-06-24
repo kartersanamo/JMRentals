@@ -14,7 +14,7 @@ const navLinks = [
   { href: "/#contact", label: "Contact" },
 ];
 
-export function Navbar() {
+export function Navbar({ showBooking = true }: { showBooking?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -57,14 +57,16 @@ export function Navbar() {
             </li>
           ))}
           <NavbarAuth />
-          <li>
-            <Link
-              href="/book"
-              className="inline-flex items-center bg-gold/20 border border-gold/50 text-gold px-4 py-2 text-xs uppercase tracking-widest hover:bg-gold hover:text-navy transition-all"
-            >
-              Book Now
-            </Link>
-          </li>
+          {showBooking && (
+            <li>
+              <Link
+                href="/book"
+                className="inline-flex items-center bg-gold/20 border border-gold/50 text-gold px-4 py-2 text-xs uppercase tracking-widest hover:bg-gold hover:text-navy transition-all"
+              >
+                Browse & Apply
+              </Link>
+            </li>
+          )}
         </ul>
 
         <button
@@ -101,15 +103,17 @@ export function Navbar() {
                 Sign In / Portal
               </Link>
             </li>
-            <li>
-              <Link
-                href="/book"
-                onClick={() => setOpen(false)}
-                className="text-xl font-display text-gold hover:text-cream transition-colors"
-              >
-                Book Now
-              </Link>
-            </li>
+            {showBooking && (
+              <li>
+                <Link
+                  href="/book"
+                  onClick={() => setOpen(false)}
+                  className="text-xl font-display text-gold hover:text-cream transition-colors"
+                >
+                  Browse & Apply
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
       )}

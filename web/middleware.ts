@@ -1,11 +1,24 @@
 import { auth } from "@/lib/auth";
 import { canAccessRolePath, getRoleHome } from "@/lib/rbac";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-ip";
 import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
   const isLoggedIn = !!session?.user;
+
+  if (
+    pathname.startsWith("/api/auth") &&
+    req.method === "POST" &&
+    !checkRateLimit(`login-ip:${getClientIp(req)}`, 30, 15 * 60 * 1000)
+  ) {
+    return NextResponse.json(
+      { error: "Too many sign-in attempts. Please try again later." },
+      { status: 429 }
+    );
+  }
 
   const isAuthPage =
     pathname === "/login" ||
@@ -46,5 +59,6 @@ export const config = {
     "/login",
     "/register",
     "/verify-email",
+    "/api/auth/:path*",
   ],
 };

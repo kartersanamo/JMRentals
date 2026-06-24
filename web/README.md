@@ -6,7 +6,7 @@ A premium marketing website and resident portal for J&M Rentals in Larose, Louis
 
 ### Public site
 - Landing page with hero, amenities, gallery, neighborhood, and contact sections
-- Dedicated pages: Amenities, Gallery, Book (Coming Soon), Terms, Privacy
+- Dedicated pages: Amenities, Gallery, Book (browse units & apply), Terms, Privacy
 - Interactive photo gallery with lightbox and inside/outside filters
 - Mapbox map with property pin
 - Contact form with Mailgun email delivery (optional)
@@ -14,8 +14,8 @@ A premium marketing website and resident portal for J&M Rentals in Larose, Louis
 ### Login portal (`/login`, `/portal`)
 Four role-based dashboards:
 - **Guest** — register, browse units, apply, track applications, message staff
-- **Staff** — manage guests, review applications, residents, maintenance, announcements
-- **Resident** — lease, documents, maintenance, payments ledger, home info, checklist, messages, community
+- **Staff** — manage guests, review applications, residents, maintenance, messages, announcements
+- **Resident** — lease, documents, maintenance, payments ledger, home info, messages, community
 - **Admin** — full governance: admins, staff, users, units, leases, audit log, settings
 
 ## Quick Start
@@ -51,7 +51,7 @@ Then set `DATABASE_URL` in `.env`:
 DATABASE_URL=mysql://jm_portal:your_secure_password@localhost:3306/jm_rentals_portal
 ```
 
-For Docker deployments, use `host.docker.internal` as the host (see `.env.example`).
+For Docker deployments, use `127.0.0.1` as the database host (the container runs with `--network host` and shares the host network stack).
 
 ## Environment Variables
 
@@ -66,7 +66,9 @@ For Docker deployments, use `host.docker.internal` as the host (see `.env.exampl
 | `NEXT_PUBLIC_MAPBOX_STYLE` | No | Map style URL (default: `streets-v12`) |
 | `NEXT_PUBLIC_SITE_URL` | Production | Canonical site URL |
 | `MAILGUN_*` | Contact form | Mailgun credentials |
-| `CONTACT_TO_EMAIL` | Contact form | Inquiry inbox |
+| `UPLOAD_DIR` | Portal | Upload storage path (Docker: `/app/data/uploads`, mounted by `deploy.sh`) |
+| `UPLOAD_DIR_HOST` | Deploy | Host path for upload volume (default `/var/lib/jm-rentals/uploads`) |
+| `MAILGUN_INBOUND_ENABLED` | No | Set `true` only after Mailgun MX + inbound route are configured |
 
 ## Portal Scripts
 
@@ -89,12 +91,12 @@ Docker on port **8004**, routed through Cloudflare tunnel.
 
 ```bash
 cd web
-# Ensure .env has DATABASE_URL (host.docker.internal for Docker → host MySQL)
+# Ensure .env has DATABASE_URL pointing at 127.0.0.1 (host MySQL)
 npm run db:deploy && npm run db:seed   # first time only
 ./deploy.sh
 ```
 
-`deploy.sh` adds `--add-host=host.docker.internal:host-gateway` so the container reaches MySQL on the host. Migrations run automatically on container start when `DATABASE_URL` is set.
+`deploy.sh` runs with `--network host`, mounts `${UPLOAD_DIR_HOST:-/var/lib/jm-rentals/uploads}` for persistent uploads, and applies database migrations on the host before starting the container.
 
 ## Launch Checklist
 

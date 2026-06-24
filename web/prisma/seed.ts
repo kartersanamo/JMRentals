@@ -43,15 +43,6 @@ const defaultHomeInfo = {
   emergency: "For maintenance emergencies after hours, call the office line and follow the prompt.",
 };
 
-const defaultChecklist = {
-  "Signed lease received": false,
-  "Move-in inspection completed": false,
-  "Keys received": false,
-  "Utilities set up": false,
-  "Emergency contacts on file": false,
-  "Parking assignment confirmed": false,
-};
-
 export async function seedDatabase(prisma: PrismaClient) {
   const address = "13049 West Main Street, Larose, LA 70373";
 
@@ -73,10 +64,7 @@ export async function seedDatabase(prisma: PrismaClient) {
     }
   }
 
-  const settings = [
-    { key: "home_info", value: JSON.stringify(defaultHomeInfo) },
-    { key: "default_checklist", value: JSON.stringify(defaultChecklist) },
-  ];
+  const settings = [{ key: "home_info", value: JSON.stringify(defaultHomeInfo) }];
 
   for (const setting of settings) {
     await prisma.portalSetting.upsert({

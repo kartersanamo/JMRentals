@@ -1,16 +1,11 @@
 import { SiteLogo } from "@/components/brand/SiteLogo";
-import { site, getDirectionsUrl, getFullAddress } from "@/lib/site-config";
+import {
+  getDirectionsUrlFromContent,
+  getFullAddressFromContent,
+  getSiteContent,
+} from "@/lib/settings/store";
 import { Facebook, Mail, MapPin, Phone } from "lucide-react";
 import Link from "next/link";
-
-const exploreLinks = [
-  { href: "/", label: "Home" },
-  { href: "/amenities", label: "Amenities" },
-  { href: "/gallery", label: "Gallery" },
-  { href: "/book", label: "Book Now" },
-  { href: "/#location", label: "Location" },
-  { href: "/#contact", label: "Contact" },
-];
 
 const portalLinks = [
   { href: "/login", label: "Sign In" },
@@ -22,8 +17,10 @@ const legalLinks = [
   { href: "/privacy", label: "Privacy Policy" },
 ];
 
-function formatOfficeHoursSummary(): string {
-  const weekdays = site.hours.filter((entry) => !entry.closed);
+function formatOfficeHoursSummary(
+  hours: Array<{ day: string; open?: string | null; close?: string | null; closed?: boolean }>
+): string {
+  const weekdays = hours.filter((entry) => !entry.closed);
   if (weekdays.length === 0) return "By appointment";
 
   const first = weekdays[0];
@@ -34,9 +31,18 @@ function formatOfficeHoursSummary(): string {
   return "See contact for hours";
 }
 
-export function Footer() {
+export async function Footer({ showBooking = true }: { showBooking?: boolean }) {
+  const site = await getSiteContent();
   const year = new Date().getFullYear();
-  const directionsUrl = getDirectionsUrl();
+  const directionsUrl = getDirectionsUrlFromContent(site);
+  const exploreLinks = [
+    { href: "/", label: "Home" },
+    { href: "/amenities", label: "Amenities" },
+    { href: "/gallery", label: "Gallery" },
+    ...(showBooking ? [{ href: "/book", label: "Browse & Apply" }] : []),
+    { href: "/#location", label: "Location" },
+    { href: "/#contact", label: "Contact" },
+  ];
 
   return (
     <footer className="bg-navy text-cream shrink-0">
@@ -126,7 +132,7 @@ export function Footer() {
                     rel="noopener noreferrer"
                     className="hover:text-gold transition-colors"
                   >
-                    {getFullAddress()}
+                    {getFullAddressFromContent(site)}
                   </a>
                 </span>
               </li>
@@ -146,7 +152,7 @@ export function Footer() {
                 </a>
               </li>
               <li className="pl-7 text-cream/60 text-xs">
-                Office hours: {formatOfficeHoursSummary()}
+                Office hours: {formatOfficeHoursSummary(site.hours)}
               </li>
               <li className="pl-7">
                 <a

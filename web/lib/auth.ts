@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { verifyPassword } from "@/lib/password";
 import { getRoleHome } from "@/lib/rbac";
 import type { UserRole } from "@prisma/client";
@@ -71,6 +72,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           password: credentials?.password,
         });
         if (!parsed.success) return null;
+
+        if (
+          !checkRateLimit(`login:${parsed.data.email}`, 10, 15 * 60 * 1000)
+        ) {
+          return null;
+        }
 
         try {
           const user = await db.user.findUnique({

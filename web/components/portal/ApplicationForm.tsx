@@ -47,6 +47,7 @@ export function ApplicationForm({
   const [moveInDate, setMoveInDate] = useState("");
   const [rentTerm, setRentTerm] = useState<"MONTHLY" | "ANNUALLY">("MONTHLY");
   const [availability, setAvailability] = useState<UnitAvailability[]>([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
   const [availabilityError, setAvailabilityError] = useState("");
   const [currentEmployer, setCurrentEmployer] = useState("");
   const [currentPosition, setCurrentPosition] = useState("");
@@ -62,6 +63,7 @@ export function ApplicationForm({
 
     async function loadAvailability() {
       setAvailabilityError("");
+      setAvailabilityLoading(true);
       try {
         const res = await fetch("/api/portal/unit-availability");
         const json = await res.json();
@@ -76,6 +78,10 @@ export function ApplicationForm({
           setAvailabilityError(
             error instanceof Error ? error.message : "Could not load availability."
           );
+        }
+      } finally {
+        if (!cancelled) {
+          setAvailabilityLoading(false);
         }
       }
     }
@@ -193,12 +199,18 @@ export function ApplicationForm({
         {availabilityError ? (
           <p className="text-sm text-red-700 mb-2">{availabilityError}</p>
         ) : null}
-        <MoveInCalendar
-          unitId={selectedUnitId}
-          units={availability}
-          selectedDate={moveInDate}
-          onSelect={setMoveInDate}
-        />
+        {availabilityLoading ? (
+          <p className="text-sm text-navy/60 animate-pulse" aria-live="polite">
+            Loading availability calendar…
+          </p>
+        ) : (
+          <MoveInCalendar
+            unitId={selectedUnitId}
+            units={availability}
+            selectedDate={moveInDate}
+            onSelect={setMoveInDate}
+          />
+        )}
         <input type="hidden" name="moveInDate" value={moveInDate} />
       </div>
 

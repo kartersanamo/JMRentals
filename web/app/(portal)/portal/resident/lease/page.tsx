@@ -32,6 +32,12 @@ export default async function ResidentLeasePage() {
           <EmptyState message="No lease found. Contact the office if this is incorrect." />
         ) : (
           <div className="space-y-8">
+            {lease.status === "PENDING" && !leaseSigningEnabled && (
+              <div className="bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900">
+                Your lease is pending. Online signing is temporarily unavailable — please
+                contact the office to complete your lease.
+              </div>
+            )}
             {lease.status === "PENDING" && leaseSigningEnabled && (
               <div className="bg-gold/10 border border-gold/30 p-4">
                 <p className="font-medium text-navy">Signature required</p>

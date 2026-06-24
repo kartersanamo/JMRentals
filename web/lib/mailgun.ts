@@ -21,7 +21,10 @@ export function getMailgunDomain(): string | null {
   return process.env.MAILGUN_DOMAIN?.trim() ?? null;
 }
 
+import { isMailgunInboundEnabled } from "@/lib/env";
+
 export function getPortalReplyAddress(threadId: string): string | null {
+  if (!isMailgunInboundEnabled()) return null;
   const domain = getMailgunDomain();
   if (!domain) return null;
   return `portal+${threadId}@${domain}`;

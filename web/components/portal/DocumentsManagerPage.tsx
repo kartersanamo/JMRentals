@@ -8,8 +8,11 @@ import {
 import { deleteDocument } from "@/lib/actions/billing";
 import { documentCategoryLabel } from "@/lib/documents/access";
 import { db } from "@/lib/db";
+import { isFeatureEnabled } from "@/lib/settings/store";
 
 export async function DocumentsManagerPage() {
+  const documentsEnabled = await isFeatureEnabled("documentManagement");
+
   const [documents, residents, units, leases] = await Promise.all([
     db.document.findMany({
       orderBy: { createdAt: "desc" },
@@ -42,17 +45,21 @@ export async function DocumentsManagerPage() {
         subtitle="Upload lease packets, addenda, receipts, and property documents."
       />
       <PortalCard title="Upload Document" className="mb-8">
-        <DocumentUploadForm
-          residents={residents.map((resident) => ({
-            id: resident.id,
-            label: `${resident.firstName} ${resident.lastName}`,
-          }))}
-          units={units.map((unit) => ({ id: unit.id, label: unit.name }))}
-          leases={leases.map((lease) => ({
-            id: lease.id,
-            label: `${lease.resident.firstName} ${lease.resident.lastName} — ${lease.unit.name}`,
-          }))}
-        />
+        {documentsEnabled ? (
+          <DocumentUploadForm
+            residents={residents.map((resident) => ({
+              id: resident.id,
+              label: `${resident.firstName} ${resident.lastName}`,
+            }))}
+            units={units.map((unit) => ({ id: unit.id, label: unit.name }))}
+            leases={leases.map((lease) => ({
+              id: lease.id,
+              label: `${lease.resident.firstName} ${lease.resident.lastName} — ${lease.unit.name}`,
+            }))}
+          />
+        ) : (
+          <EmptyState message="Document uploads are disabled in System Control." />
+        )}
       </PortalCard>
       <PortalCard title="All Documents">
         {documents.length === 0 ? (

@@ -234,21 +234,6 @@ export async function signLease(formData: FormData) {
         signedIp,
       },
     });
-
-    const profile = await tx.residentProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { checklistProgress: true },
-    });
-    if (profile?.checklistProgress && typeof profile.checklistProgress === "object") {
-      const progress = {
-        ...(profile.checklistProgress as Record<string, boolean>),
-        "Signed lease received": true,
-      };
-      await tx.residentProfile.update({
-        where: { userId: session.user.id },
-        data: { checklistProgress: progress },
-      });
-    }
   });
 
   await dispatchPortalNotification(() => notifyLeaseSigned(lease.id));

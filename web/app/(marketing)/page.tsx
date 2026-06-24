@@ -27,6 +27,7 @@ export default async function HomePage() {
           name={siteContent.name}
           tagline={siteContent.tagline}
           heroImage={siteContent.heroImage}
+          showBooking={config.features.onlineBookingPage}
         />
       )}
       {config.marketing.showWelcome && (
@@ -47,7 +48,7 @@ export default async function HomePage() {
       {config.marketing.showNeighborhood && (
         <Neighborhood items={siteContent.neighborhood} />
       )}
-      {config.marketing.showBookingTeaser && (
+      {config.marketing.showBookingTeaser && config.features.onlineBookingPage && (
         <BookingTeaser floorPlans={runtimeSite.floorPlans} />
       )}
       {config.marketing.showContactSection && (

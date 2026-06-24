@@ -93,7 +93,6 @@ export function AdminCommandCenter({
   stats,
   auditLogs,
   homeInfoJson,
-  checklistJson,
 }: {
   systemConfig: SystemConfig;
   siteContent: SiteContent;
@@ -101,7 +100,6 @@ export function AdminCommandCenter({
   stats: SystemDataStats;
   auditLogs: AuditLogEntry[];
   homeInfoJson: string;
-  checklistJson: string;
 }) {
   const [tab, setTab] = useState<TabId>("overview");
 
@@ -338,14 +336,6 @@ export function AdminCommandCenter({
             <ActionForm action={updatePortalSettingJson} successMessage="Home info saved." submitLabel="Save home info">
               <input type="hidden" name="key" value="home_info" />
               <textarea name="value" rows={12} defaultValue={homeInfoJson} className={`${fieldClass} font-mono text-sm`} spellCheck={false} />
-            </ActionForm>
-          </section>
-
-          <section className="bg-white border border-navy/10 p-6">
-            <h2 className="font-display text-2xl text-navy mb-4">Default move-in checklist (JSON)</h2>
-            <ActionForm action={updatePortalSettingJson} successMessage="Checklist saved." submitLabel="Save checklist">
-              <input type="hidden" name="key" value="default_checklist" />
-              <textarea name="value" rows={10} defaultValue={checklistJson} className={`${fieldClass} font-mono text-sm`} spellCheck={false} />
             </ActionForm>
           </section>
         </div>

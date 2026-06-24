@@ -80,7 +80,7 @@ export const FEATURE_DEFINITIONS: Array<{
   {
     key: "onlineBookingPage",
     label: "Online booking page",
-    description: "Public /book page (booking flow still coming soon)",
+    description: "Public /book page — redirects guests to browse units and apply",
     group: "website",
   },
   {

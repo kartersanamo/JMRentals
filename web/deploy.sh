@@ -40,6 +40,8 @@ SITE_URL="${NEXT_PUBLIC_SITE_URL:-https://jm.kartersanamo.com}"
 CONTAINER_NAME="jm-rentals"
 IMAGE_TAG="jm-rentals:latest"
 HOST_PORT=8004
+UPLOAD_DIR_HOST="${UPLOAD_DIR_HOST:-/var/lib/jm-rentals/uploads}"
+UPLOAD_DIR_CONTAINER="/app/data/uploads"
 
 ENV_FILE_ARGS=()
 if [[ -f .env ]]; then
@@ -62,9 +64,16 @@ docker build -t "${IMAGE_TAG}" \
   .
 
 if [[ -f .env ]] || [[ -f .env.local ]]; then
-  echo "Applying database migrations on host..."
-  npm run db:deploy
+  echo "Checking database migrations on host..."
+  if npx prisma migrate status 2>&1 | grep -q "Database schema is up to date"; then
+    echo "Database schema is up to date."
+  else
+    echo "Applying pending database migrations on host..."
+    npm run db:deploy
+  fi
 fi
+
+mkdir -p "${UPLOAD_DIR_HOST}"
 
 echo "Replacing container..."
 docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
@@ -74,11 +83,13 @@ docker run -d \
   --name "${CONTAINER_NAME}" \
   --restart unless-stopped \
   --network host \
+  -v "${UPLOAD_DIR_HOST}:${UPLOAD_DIR_CONTAINER}" \
   "${ENV_FILE_ARGS[@]}" \
   -e HOSTNAME=0.0.0.0 \
   -e "PORT=${HOST_PORT}" \
   -e "NEXT_PUBLIC_SITE_URL=${SITE_URL}" \
   -e "AUTH_URL=${SITE_URL}" \
+  -e "UPLOAD_DIR=${UPLOAD_DIR_CONTAINER}" \
   "${IMAGE_TAG}"
 
 echo "Done. Container listening on http://localhost:${HOST_PORT}"

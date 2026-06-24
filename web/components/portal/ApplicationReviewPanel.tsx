@@ -65,9 +65,7 @@ export function ApplicationReviewPanel({
   const [proposedUnitId, setProposedUnitId] = useState(initialUnitId);
   const [proposedMoveInDate, setProposedMoveInDate] = useState(initialMoveIn);
   const [proposedRentTerm, setProposedRentTerm] = useState<"MONTHLY" | "ANNUALLY">(
-    (application.proposedRentTerm ?? application.rentTerm) === "ANNUALLY"
-      ? "ANNUALLY"
-      : "MONTHLY"
+    "MONTHLY"
   );
   const [proposedMonthlyRent, setProposedMonthlyRent] = useState(
     String(initialRent || "")
@@ -77,12 +75,14 @@ export function ApplicationReviewPanel({
   );
   const [reviewNotes, setReviewNotes] = useState(application.reviewNotes ?? "");
   const [availability, setAvailability] = useState<UnitAvailability[]>([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
   const [proposalError, setProposalError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadAvailability() {
+      setAvailabilityLoading(true);
       try {
         const res = await fetch(
           `/api/portal/unit-availability?excludeApplicationId=${application.id}`
@@ -93,6 +93,10 @@ export function ApplicationReviewPanel({
         }
       } catch {
         // Availability is helpful but not required for staff edits.
+      } finally {
+        if (!cancelled) {
+          setAvailabilityLoading(false);
+        }
       }
     }
 
@@ -191,12 +195,18 @@ export function ApplicationReviewPanel({
 
           <div>
             <p className={labelClass}>Move-In Date</p>
-            <MoveInCalendar
-              unitId={proposedUnitId}
-              units={availability}
-              selectedDate={proposedMoveInDate}
-              onSelect={setProposedMoveInDate}
-            />
+            {availabilityLoading ? (
+              <p className="text-sm text-navy/60 animate-pulse" aria-live="polite">
+                Loading availability calendar…
+              </p>
+            ) : (
+              <MoveInCalendar
+                unitId={proposedUnitId}
+                units={availability}
+                selectedDate={proposedMoveInDate}
+                onSelect={setProposedMoveInDate}
+              />
+            )}
           </div>
 
           <RentTermPicker

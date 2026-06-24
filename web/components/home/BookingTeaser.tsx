@@ -7,9 +7,13 @@ import { site } from "@/lib/site-config";
 
 export function BookingTeaser({
   floorPlans = site.floorPlans,
+  showBooking = true,
 }: {
   floorPlans?: SiteFloorPlan[];
+  showBooking?: boolean;
 }) {
+  if (!showBooking) return null;
+
   return (
     <section id="availability" className="section-padding bg-sand/40">
       <div className="mx-auto max-w-7xl">
@@ -29,7 +33,7 @@ export function BookingTeaser({
                 description={plan.description}
                 imageUrl={plan.imageUrl}
                 actionHref="/book"
-                actionLabel="Book Now"
+                actionLabel="Browse & Apply"
               />
             </AnimateIn>
           ))}
@@ -37,7 +41,7 @@ export function BookingTeaser({
 
         <div className="mt-10 text-center">
           <ButtonLink href="/book" variant="secondary" size="lg">
-            Book Now
+            Browse & Apply
           </ButtonLink>
         </div>
       </div>

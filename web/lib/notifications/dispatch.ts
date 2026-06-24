@@ -181,6 +181,38 @@ ${application.proposalNotes ? `<p><strong>Note from staff:</strong> ${applicatio
   }));
 }
 
+export async function notifyApplicationProposalDeclined(applicationId: string) {
+  const application = await db.application.findUnique({
+    where: { id: applicationId },
+    include: {
+      guest: { select: { firstName: true, lastName: true, email: true } },
+      desiredUnit: { select: { name: true } },
+      proposedUnit: { select: { name: true } },
+    },
+  });
+  if (!application) return;
+
+  const unitName =
+    application.proposedUnit?.name ?? application.desiredUnit?.name ?? "their application";
+
+  await notifyUsers(
+    "application_proposal_declined",
+    ["ADMIN", "STAFF"],
+    (user) => ({
+      subject: `Lease proposal declined — ${unitName}`,
+      text: `Hi ${user.firstName},
+
+${application.guest.firstName} ${application.guest.lastName} (${application.guest.email}) declined the proposed lease terms for ${unitName}.
+
+Review the application in the portal:
+${portalLink("/portal/staff/applications")}`,
+      html: `<p>Hi ${user.firstName},</p>
+<p><strong>${application.guest.firstName} ${application.guest.lastName}</strong> (${application.guest.email}) declined the proposed lease terms for <strong>${unitName}</strong>.</p>
+<p><a href="${portalLink("/portal/staff/applications")}">Review applications</a></p>`,
+    })
+  );
+}
+
 export async function notifyApplicationStatusChanged(applicationId: string) {
   const application = await db.application.findUnique({
     where: { id: applicationId },

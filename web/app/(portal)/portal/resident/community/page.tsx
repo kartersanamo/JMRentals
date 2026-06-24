@@ -1,13 +1,16 @@
 import { PortalCard, PortalPageHeader } from "@/components/portal/PortalCard";
 import { site } from "@/lib/site-config";
+import { getSiteContent } from "@/lib/settings/store";
 
-export default function ResidentCommunityPage() {
+export default async function ResidentCommunityPage() {
+  const content = await getSiteContent();
+
   return (
     <div>
       <PortalPageHeader title="Community" subtitle="Amenities, hours, and neighborhood highlights." />
       <PortalCard title="Office Hours" className="mb-6">
         <ul className="space-y-2 text-sm text-navy/80">
-          {site.hours.map((h) => (
+          {content.hours.map((h) => (
             <li key={h.day} className="flex justify-between">
               <span>{h.day}</span>
               <span>
@@ -29,7 +32,7 @@ export default function ResidentCommunityPage() {
       </PortalCard>
       <PortalCard title="Neighborhood" className="mt-6">
         <ul className="list-disc list-inside text-sm text-navy/80 space-y-1">
-          {site.neighborhood.map((item) => (
+          {content.neighborhood.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>

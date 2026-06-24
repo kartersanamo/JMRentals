@@ -1,4 +1,3 @@
-import { getDefaultChecklist } from "@/lib/portal/checklist";
 import {
   getEffectiveApplicationTerms,
   type ApplicationWithUnits,
@@ -46,7 +45,6 @@ export async function provisionLease(
     where: { userId: input.residentId },
     create: {
       userId: input.residentId,
-      checklistProgress: await getDefaultChecklist(),
     },
     update: {},
   });

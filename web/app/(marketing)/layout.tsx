@@ -1,11 +1,15 @@
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
+import { getSystemConfig } from "@/lib/settings/store";
 
-export default function MarketingLayout({
+export default async function MarketingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const config = await getSystemConfig();
+  const showBooking = config.features.onlineBookingPage;
+
   return (
     <>
       <a
@@ -14,9 +18,9 @@ export default function MarketingLayout({
       >
         Skip to main content
       </a>
-      <Navbar />
+      <Navbar showBooking={showBooking} />
       <main id="main-content">{children}</main>
-      <Footer />
+      <Footer showBooking={showBooking} />
     </>
   );
 }

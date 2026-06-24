@@ -9,10 +9,12 @@ export function Hero({
   name = site.name,
   tagline = site.tagline,
   heroImage = site.heroImage,
+  showBooking = true,
 }: {
   name?: string;
   tagline?: string;
   heroImage?: string;
+  showBooking?: boolean;
 }) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -64,9 +66,11 @@ export function Hero({
           <ButtonLink href="/#contact" variant="ghost" size="lg">
             Contact Us
           </ButtonLink>
-          <ButtonLink href="/book" variant="ghost" size="md" className="opacity-90">
-            Book Now
-          </ButtonLink>
+          {showBooking && (
+            <ButtonLink href="/book" variant="ghost" size="md" className="opacity-90">
+              Browse & Apply
+            </ButtonLink>
+          )}
         </motion.div>
       </div>
 

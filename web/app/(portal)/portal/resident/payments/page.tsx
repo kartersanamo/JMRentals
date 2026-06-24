@@ -42,8 +42,14 @@ export default async function ResidentPaymentsPage({
         </div>
       )}
       {params.paid === "cancelled" && (
-        <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 text-sm">
+        <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 text-sm" role="alert">
           Checkout was cancelled. You can try again whenever you are ready.
+        </div>
+      )}
+      {params.paid === "failure" && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-900 px-4 py-3 text-sm" role="alert">
+          Payment could not be completed. No charge was made. Please try again or contact the
+          office if the problem continues.
         </div>
       )}
       <PortalCard title="Account Balance" className="mb-6">

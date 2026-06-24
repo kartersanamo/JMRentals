@@ -186,8 +186,6 @@ export const applicationReviewSchema = z.object({
   reviewNotes: z.string().max(2000).optional(),
 });
 
-export const checklistSchema = z.record(z.boolean());
-
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ApplicationInput = z.infer<typeof applicationSchema>;
 export type EmploymentDetails = z.infer<typeof employmentDetailsSchema>;

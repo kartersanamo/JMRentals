@@ -1,9 +1,15 @@
 #!/bin/sh
+set -e
 cd /app
-if [ -n "$DATABASE_URL" ] && [ -f ./node_modules/prisma/build/index.js ]; then
-  echo "Running database migrations..."
-  if ! node ./node_modules/prisma/build/index.js migrate deploy; then
-    echo "WARNING: In-container migration failed. Run 'npm run db:deploy' on the host before deploy."
-  fi
+
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERROR: DATABASE_URL must be set."
+  exit 1
 fi
+
+if [ -z "$AUTH_SECRET" ]; then
+  echo "ERROR: AUTH_SECRET must be set."
+  exit 1
+fi
+
 exec node server.js

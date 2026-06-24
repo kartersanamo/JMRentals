@@ -1,5 +1,5 @@
 import { ApplicationForm } from "@/components/portal/ApplicationForm";
-import { PortalCard, PortalPageHeader } from "@/components/portal/PortalCard";
+import { EmptyState, PortalCard, PortalPageHeader } from "@/components/portal/PortalCard";
 import { db } from "@/lib/db";
 import { isFeatureEnabled } from "@/lib/settings/store";
 import Link from "next/link";
@@ -46,7 +46,11 @@ export default async function GuestApplyPage({
         subtitle="Tell us about your employment, income, and preferred move-in date."
       />
       <PortalCard>
-        <ApplicationForm units={unitOptions} defaultUnitId={unitId} />
+        {unitOptions.length === 0 ? (
+          <EmptyState message="No units are available to apply for right now. Browse units or contact the office." />
+        ) : (
+          <ApplicationForm units={unitOptions} defaultUnitId={unitId} />
+        )}
       </PortalCard>
     </div>
   );
